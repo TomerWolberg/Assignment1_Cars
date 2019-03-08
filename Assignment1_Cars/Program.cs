@@ -97,24 +97,6 @@ namespace SuperUltraAwesomeAI
         //Distance from goal
         int Heuristic2() => BOARD_SIZE - cars['X'].posX;
 
-        //BFS with blocked number of nodes at each level - Best Heuristic function
-        const  int H3BFS = 5000;
-        static int H3MOD = 0;
-        static int H3Val = int.MaxValue;
-        int Heuristic3()
-        {
-            if (--H3MOD == 0)
-            {
-                H3MOD = H3BFS;
-            }
-            else if (H3MOD < H3BFS / 2)
-            {
-                H3MOD = H3BFS;
-                --H3Val;
-            }
-            return H3Val--;
-        }
-
         //Create a deep copy of RushHour
         public RushHour Clone()
         {
@@ -257,7 +239,7 @@ namespace SuperUltraAwesomeAI
                 if (r != null)
                 {
                     state     = r.Clone();
-                    heuristic = state.Heuristic3(); //Selected heuristic function
+                    heuristic = state.Heuristic2(); //Selected heuristic function
                 }
             }
         }
