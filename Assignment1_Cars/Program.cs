@@ -28,20 +28,6 @@ namespace SuperUltraAwesomeAI
 
         //Private empty C'tor
         private RushHour() { }
-		
-		//Returns board state as string (instead of 2D-array)
-		public string GetBoardString()
-		{
-			string s = "";
-			for(int i = 0; i < BOARD_SIZE; i++)
-			{
-				for(int j = 0; j < BOARD_SIZE; j++)
-				{
-					s += board[i, j];
-				}
-			}
-			return s;
-		}
 
 		//Save all the car names, positions and moving axes.
 		//It also transfer the level's string to 2D array
@@ -97,6 +83,39 @@ namespace SuperUltraAwesomeAI
         //Distance from goal
         int Heuristic2() => BOARD_SIZE - cars['X'].posX;
 
+        int Heuristic3()
+        {
+            bool IsBlockedUp(char carName)
+            {
+                var car = cars[carName];
+                return car.size > 2               ||
+                       board[0, car.posX]  != '.' ||
+                       (board[1, car.posX] != carName && board[1, car.posX] != '.');
+            }
+            bool IsBlockedDown(char carName)
+            {
+                var car = cars[carName];
+                return (board[3, car.posX] != carName && board[3, car.posX] != '.') ||
+                       (board[4, car.posX] != carName && board[4, car.posX] != '.') ||
+                       (car.size == 3 && board[5, car.posX] != '.');
+            }
+            var redCar = cars['X'];
+            int count  = 0;
+            for (int i = redCar.posX + redCar.size; i < BOARD_SIZE; i++)
+            {
+                char c = board[RED_CAR_Y_INDEX, i];
+                if (c != '.')
+                {
+                    if (IsBlockedUp(c) && IsBlockedDown(c))
+                    {
+                        count++;
+                    }
+                    count++;
+                }
+            }
+            return count / Heuristic2();
+        }
+        
         //Create a deep copy of RushHour
         public RushHour Clone()
         {
@@ -164,7 +183,7 @@ namespace SuperUltraAwesomeAI
             return action;
         }
 
-        static Random rand = new Random(); //used to randomize moves order
+        static Random rand = new Random(); //randomize the order of the moves
         string[] PossibleMoves()
         {
             var moves = new List<string>();
@@ -205,7 +224,6 @@ namespace SuperUltraAwesomeAI
                 moves[u] = moves[i];
                 moves[i] = temp;
             }
-
             return moves.ToArray();
         }
 
@@ -230,22 +248,25 @@ namespace SuperUltraAwesomeAI
             public readonly string   action;
             public readonly RushHour state;
             public readonly int      heuristic;
+            public readonly int      height;
             public Node( Node     p ,
                          RushHour r ,
-                         string   a )
+                         string   a ,
+                         int      h )
             {
                 action = a;
                 parent = p;
+                height = h;
                 if (r != null)
                 {
                     state     = r.Clone();
-                    heuristic = state.Heuristic2(); //Selected heuristic function
+                    heuristic = rand.Next(h);
                 }
             }
         }
         class NodesMinHeap
         {
-            public readonly List<Node> nodes = new List<Node>();
+            public readonly List<Node> nodes = new List<Node>(500);
             public int Count { get => nodes.Count; }
 
             //Add new node to the heap
@@ -262,7 +283,7 @@ namespace SuperUltraAwesomeAI
                 }
             }
 
-            //Remove min node from the heap and returns it
+            //Remove min node from the heap and return it
             public Node Remove()
             {
                 //Remove min value
@@ -352,21 +373,102 @@ namespace SuperUltraAwesomeAI
             return ans;
         }
 
-        //Best-first search informed search
-        public string BestFS()
+        class BFSNode
         {
-            var  set   = new HashSet<string> { GetBoardString() };
-            var  heap  = new NodesMinHeap();
-            var  moves = PossibleMoves();
-            Node ans   = null;
+            public readonly BFSNode  parent;
+            public readonly string   action;
+            public readonly RushHour state;
+            public BFSNode( BFSNode  p ,
+                            RushHour r ,
+                            string   a )
+            {
+                action = a;
+                parent = p;
+                state  = r?.Clone();
+            }
+        }
 
-            //Insert all possible moves to the heap
-            foreach (var move in moves)
+        //Like BFS but with max queue size
+        public string SmartBFS()
+        {
+            const int MAX_QUEUE_SIZE = 1500;
+
+            var queue   = new Queue<BFSNode>(MAX_QUEUE_SIZE);
+            BFSNode ans = null;
+
+            //Insert all possible moves to the queue
+            foreach (var move in PossibleMoves())
             {
                 RushHour r = Clone();
                 r.Move(move);
-                heap.Insert(new Node(null, r, move));
+                if (queue.Count < MAX_QUEUE_SIZE)
+                    queue.Enqueue(new BFSNode(null, r, move));
+            }
+            while (queue.Count > 0 && ans == null)
+            {   //While there are possible moves and we didn't find solution
+                var top = queue.Dequeue(); //Get from the heap the best move
+                if (top.state.CanReachGoal())
+                {   //If nothing blocks the red car
+                    ans = new BFSNode(top, null, "XR" + (BOARD_SIZE - cars['X'].posX));
+                }
+                else if (queue.Count < MAX_QUEUE_SIZE)
+                {   //Add to the heap every possible move from current state
+                    var moves = top.state.PossibleMoves();
+                    for (int i = 0; i < moves.Length && queue.Count < MAX_QUEUE_SIZE; i++)
+                    {
+                        string move = moves[i];
+                        RushHour r = top.state.Clone();
+                        r.Move(move);
+                        if (r.CanReachGoal())
+                        {
+                            ans = new BFSNode(new BFSNode(top, r, move), null, "XR" + (BOARD_SIZE - r.cars['X'].posX));
+                        }
+                        else
+                        {
+                            queue.Enqueue(new BFSNode(top, r, move));
+                        }
+                    }
+                }
+            }
+
+            //Get the solution string
+            string s = string.Empty;
+            while (ans != null)
+            {
+                s = ans.action + " " + s;
+                ans = ans.parent;
+            }
+
+            return s;
+        }
+
+        public string GetBoardString()
+        {
+            string s = string.Empty;
+            for (int i = 0; i < BOARD_SIZE; i++)
+            {
+                for (int j = 0; j < BOARD_SIZE; j++)
+                {
+                    s += board[i, j];
+                }
+            }
+            return s;
+        }
+
+        //Best-first search informed search
+        public string BestFS()
+        {
+            var  heap = new NodesMinHeap();
+            var  set  = new HashSet<string> { GetBoardString() };
+            Node ans  = null;
+
+            //Insert all possible moves to the heap
+            foreach (var move in PossibleMoves())
+            {
+                RushHour r = Clone();
+                r.Move(move);
                 set.Add(r.GetBoardString());
+                heap.Insert(new Node(null, r, move, 1));
             }
 
             while (heap.Count > 0 && ans == null)
@@ -374,7 +476,7 @@ namespace SuperUltraAwesomeAI
                 var top = heap.Remove(); //Get from the heap the best move
                 if (top.state.CanReachGoal())
                 {   //If nothing blocks the red car
-                    ans = new Node(top, null, "XR" + (BOARD_SIZE - cars['X'].posX));
+                    ans = new Node(top, null, "XR" + (BOARD_SIZE - cars['X'].posX), top.height + 1);
                 }
                 else
                 {   //Add to the heap every possible move from current state
@@ -382,13 +484,20 @@ namespace SuperUltraAwesomeAI
                     {
                         RushHour r = top.state.Clone();
                         r.Move(move);
-                        if (!set.Contains(r.GetBoardString()))
+                        string state_str = r.GetBoardString();
+                        if (!set.Contains(state_str))
                         {
-                            heap.Insert(new Node(top, r, move));
+                            set.Add(state_str);
+                            if (r.CanReachGoal())
+                            {
+                                ans = new Node(new Node(top, r, move, top.height + 1), null, "XR" + (BOARD_SIZE - r.cars['X'].posX), top.height + 2);
+                            }
+                            heap.Insert(new Node(top, r, move, top.height + 1));
                         }
                     }
                 }
             }
+
             //Get the solution string
             string s = string.Empty;
             while (ans != null)
@@ -396,6 +505,7 @@ namespace SuperUltraAwesomeAI
                 s   = ans.action + " " + s;
                 ans = ans.parent;
             }
+
             return s;
         }
     }
@@ -404,6 +514,7 @@ namespace SuperUltraAwesomeAI
     {
         public static void Main(string[] args)
         {
+            int i = 0;
             string k =
 @"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
 A..OOOA..B.PXX.BCPQQQ.CP..D.EEFFDGG.
@@ -446,28 +557,27 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
-            Stopwatch s      = new Stopwatch();
-            double    c      = 0;
-            TimeSpan  t      = TimeSpan.Zero;
-            string[]  levels =  k.Split('\n');
-
+            Stopwatch s = new Stopwatch();
+            double c    = 0;
+            TimeSpan t  = TimeSpan.Zero;
+            string[] levels = k.Split('\n');
             foreach (var item in levels)
             {
-                var task = Task.Run(() => new RushHour(item).BestFS());
+                var task = Task.Run(() => new RushHour(item).SmartBFS());
                 s.Start();
-                bool finished = task.Wait(TimeSpan.FromSeconds(10));
+                bool finished = task.Wait(TimeSpan.FromSeconds(20));
                 s.Stop();
                 t += s.Elapsed / levels.Length;
                 if (finished)
                 {
-                    Console.WriteLine("Succeded");
-                    c += task.Result.Split(' ').Length / (double)levels.Length;
+                    int len = task.Result.Split(' ').Length;
+                    Console.WriteLine("Succeded - " + len + " - " + i++);
+                    c += len / (double)levels.Length;
                 }
                 else
                 {
-                    Console.WriteLine("Failed");
+                    Console.WriteLine("Failed" + " - " + i++);
                 }
-                s.Stop();
                 Console.WriteLine(s.Elapsed);
                 s.Reset();
             }
