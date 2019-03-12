@@ -45,7 +45,7 @@ namespace SuperUltraAwesomeAI
                         sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
                     }
                     else if (n.height < (l - 1) && sol == null)
-                    {   //Add every possible move
+                    {   //Add possible moves to the stack
                         var moves = PossibleMoves();
                         for (int i = 0; i < moves.Length && sol == null; i++)
                         {
@@ -224,7 +224,7 @@ namespace SuperUltraAwesomeAI
         int Heuristic2() => BOARD_SIZE - cars['X'].posX;
         /*-----------------------------------------------------------------*/
 
-        //Create a deep copy of RushHour
+        //Create a deep copy of the RushHour class
         public RushHour Clone()
         {
             var dict = new Dictionary<char, CarDetails>(cars.Count);
