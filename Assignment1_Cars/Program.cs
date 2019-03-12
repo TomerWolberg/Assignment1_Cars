@@ -214,7 +214,7 @@ namespace SuperUltraAwesomeAI
                     }
                 }
             }
-            
+
             return moves.ToArray();
         }
 
@@ -262,7 +262,7 @@ namespace SuperUltraAwesomeAI
                 if (r != null)
                 {
                     state     = r.Clone();
-                    heuristic = r.Heuristic1();
+                    heuristic = r.Heuristic1() + h;
                 }
             }
         }
@@ -562,7 +562,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
             foreach (var item in levels)
             {
-                var task = Task.Run(() => new RushHour(item).IDS());
+                var task = Task.Run(() => new RushHour(item).BestFS());
                 s.Start();
                 bool finished = task.Wait(TimeSpan.FromSeconds(20));
                 s.Stop();
