@@ -18,19 +18,159 @@ namespace SuperUltraAwesomeAI
             public Axis axis;
         }
 
-        //Constants
+        /* Variables
+        -------------------------------------*/
+        //           Constants:
         public const int BOARD_SIZE      = 6;
         public const int RED_CAR_Y_INDEX = 2;
 
-        //Fields
+        //            Fields:
         Dictionary<char, CarDetails> cars;
         char[,]                      board;
+        /*-----------------------------------*/
 
+        /* Search algorithms
+        ------------------------------------------------------------------------------------------*/
+        //DLS uninformed search
+        public string DLS( int l )
+        {
+            DLSNode sol = null;
+            var     set = new HashSet<string>();
+            void FindSolution(DLSNode n)
+            {
+                if (set.Add(GetHash()))
+                {
+                    if (CanReachGoal())
+                    {   //Found solution
+                        sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
+                    }
+                    else if (n.height < (l - 1) && sol == null)
+                    {   //Add every possible move
+                        var moves = PossibleMoves();
+                        for (int i = 0; i < moves.Length && sol == null; i++)
+                        {
+                            Move(moves[i]);
+                            FindSolution(new DLSNode(n, moves[i], n.height + 1));
+                            Move(OppositeMove(moves[i]));
+                        }
+                    }
+                }
+            }
+            FindSolution(new DLSNode(null, null, 0));
+            return sol.GetSolution();
+        }
+
+        //IDS uninformed search
+        public string IDS()
+        {
+            string s;
+            int i = 1;
+            do s = DLS(i++);
+            while (s == "failed");
+            return s;
+        }
+
+        //Best-first search informed search
+        public string BestFS()
+        {
+            var  heap = new NodesMinHeap(new Node(null, this, null, 0));
+            Node ans  = null;
+
+            while (ans == null)
+            {   //While we haven't found solution
+                var top = heap.Remove(); //Get from the heap the best move
+                foreach (var move in top.state.PossibleMoves())
+                {
+                    RushHour r = top.state.Clone();
+                    r.Move(move);
+                    Node next = new Node(top, r, move, top.height + 1);
+                    if (r.CanReachGoal())
+                    {   //Found solution
+                        ans = new Node(next, null, "XR" + r.Heuristic2(), top.height + 2);
+                    }
+                    else
+                    {   //Add node to the heap (if the state is new)
+                        heap.Insert(next);
+                    }
+                }
+            }
+
+            return ans.GetSolution();
+        }
+        /*----------------------------------------------------------------------------------------*/
+
+        /* Nodes
+        -------------------------------------------*/
+        //Node used in the DLS function
+        class DLSNode
+        {
+            public readonly DLSNode parent;
+            public readonly string  action;
+            public readonly int     height;
+            public DLSNode( DLSNode p ,
+                            string  a ,
+                            int     h )
+            {
+                parent = p;
+                action = a;
+                height = h;
+            }
+            public string GetSolution()
+            {
+                DLSNode sol = this;
+                string  ans = string.Empty;
+                while (sol.parent != null)
+                {
+                    ans = sol.action + " " + ans;
+                    sol = sol.parent;
+                }
+                return ans;
+            }
+        }
+		
+        //Node used in the BestFS function
+        class Node
+        {
+            public readonly Node     parent;
+            public readonly string   action;
+            public readonly RushHour state;
+            public readonly int      heuristic;
+            public readonly int      height;
+            public Node( Node     p ,
+                         RushHour r ,
+                         string   a ,
+                         int      h )
+            {
+                action = a;
+                parent = p;
+                height = h;
+                if (r != null)
+                {
+                    state     = r.Clone();
+                    heuristic = r.Heuristic1() + h;
+                }
+            }
+            public string GetSolution()
+            {
+                Node   sol = this;
+                string ans = string.Empty;
+                while (sol.parent != null)
+                {
+                    ans = sol.action + " " + ans;
+                    sol = sol.parent;
+                }
+                return ans;
+            }
+        }
+        /*-----------------------------------------*/
+
+        /* Constructors
+        --------------------------------------------------------------------------*/
         //Private empty C'tor
         private RushHour() { }
 
-		//Save all the car names, positions and moving axes.
-		//It also transfer the level's string to 2D array
+        //Public C'tor, save all the car names, positions and moving axes.
+		//It also transfers the level's string to a 2D-array.
         public RushHour( string level )
         {
             board = new char[BOARD_SIZE, BOARD_SIZE];
@@ -63,7 +203,10 @@ namespace SuperUltraAwesomeAI
                 }
             }
         }
+        /*------------------------------------------------------------------------*/
 
+        /* Heuristics
+        ------------------------------------------------------------------*/
         //Number of cars blocking the red car
         int Heuristic1()
         {
@@ -77,45 +220,10 @@ namespace SuperUltraAwesomeAI
             return count;
         }
 
-        //Check if there aren't any cars that are blocking the way
-        bool CanReachGoal() => Heuristic1() == 0;
-
         //Distance from goal
         int Heuristic2() => BOARD_SIZE - cars['X'].posX;
+        /*-----------------------------------------------------------------*/
 
-        int Heuristic3()
-        {
-            bool IsBlockedUp(char carName)
-            {
-                var car = cars[carName];
-                return car.size > 2               ||
-                       board[0, car.posX]  != '.' ||
-                       (board[1, car.posX] != carName && board[1, car.posX] != '.');
-            }
-            bool IsBlockedDown(char carName)
-            {
-                var car = cars[carName];
-                return (board[3, car.posX] != carName && board[3, car.posX] != '.') ||
-                       (board[4, car.posX] != carName && board[4, car.posX] != '.') ||
-                       (car.size == 3 && board[5, car.posX] != '.');
-            }
-            var redCar = cars['X'];
-            int count  = 0;
-            for (int i = redCar.posX + redCar.size; i < BOARD_SIZE; i++)
-            {
-                char c = board[RED_CAR_Y_INDEX, i];
-                if (c != '.')
-                {
-                    if (IsBlockedUp(c) && IsBlockedDown(c))
-                    {
-                        count++;
-                    }
-                    count++;
-                }
-            }
-            return count / Heuristic2();
-        }
-        
         //Create a deep copy of RushHour
         public RushHour Clone()
         {
@@ -134,10 +242,29 @@ namespace SuperUltraAwesomeAI
             return new RushHour
             {
                 cars  = dict,
-                board = (char[,])board.Clone(),
+                board = (char[,])board.Clone()
             };
         }
 
+        //Check if there aren't any cars that are blocking the way
+        bool CanReachGoal() => Heuristic1() == 0;
+
+        //Returns string that represent the board state
+        public string GetHash()
+        {
+            string s = string.Empty;
+            for (int i = 0; i < BOARD_SIZE; i++)
+            {
+                for (int j = 0; j < BOARD_SIZE; j++)
+                {
+                    s += board[i, j];
+                }
+            }
+            return s;
+        }
+
+        //Moves a car according to a given action.
+        //For example: AU2 moves car A 2 
         void Move( string action )
         {
             if (action != null)
@@ -183,6 +310,7 @@ namespace SuperUltraAwesomeAI
             return action;
         }
 
+        //Return every possible move from current state.
         string[] PossibleMoves()
         {
             var moves = new List<string>();
@@ -218,70 +346,37 @@ namespace SuperUltraAwesomeAI
             return moves.ToArray();
         }
 
-        class DLSNode
+        //Min heap struct for the BestFS Node
+        struct NodesMinHeap
         {
-            public readonly DLSNode parent;
-            public readonly string  action;
-            public readonly int     height;
-            public DLSNode( DLSNode p ,
-                            string  a ,
-                            int     h )
-            {
-                parent = p;
-                action = a;
-                height = h;
-            }
-            public string GetSolution()
-            {
-                DLSNode sol = this;
-                string  ans = string.Empty;
-                while (sol.parent != null)
-                {
-                    ans = sol.action + " " + ans;
-                    sol = sol.parent;
-                }
-                return ans;
-            }
-        }
-		
-        class Node
-        {
-            public readonly Node     parent;
-            public readonly string   action;
-            public readonly RushHour state;
-            public readonly int      heuristic;
-            public readonly int      height;
-            public Node( Node     p ,
-                         RushHour r ,
-                         string   a ,
-                         int      h )
-            {
-                action = a;
-                parent = p;
-                height = h;
-                if (r != null)
-                {
-                    state     = r.Clone();
-                    heuristic = r.Heuristic1() + h;
-                }
-            }
-        }
-        class NodesMinHeap
-        {
-            public readonly List<Node> nodes = new List<Node>();
+            public readonly List<Node>      nodes;
+            public readonly HashSet<string> set;
+
+            //Number of items in the heap
             public int Count { get => nodes.Count; }
 
-            //Add new node to the heap
+            //Constructor
+            public NodesMinHeap(Node first)
+            {
+                nodes = new List<Node>();
+                set   = new HashSet<string>();
+                Insert(first);
+            }
+
+            //If the node wasn't already in the heap adds the new node to the heap
             public void Insert( Node node )
             {
-                nodes.Add(node);
-                int i = nodes.Count - 1, j;
-                while (i > 0 && nodes[j = (i - 1) / 2].heuristic > nodes[i].heuristic)
-                {   //while *parent(i) > *i:
-                    Node temp = nodes[j]; //*i <=> *parent(i)
-                    nodes[j]  = nodes[i]; //...
-                    nodes[i]  = temp;     //...
-                    i         = j;        //i = parent(i)
+                if (set.Add(node.state.GetHash()))
+                {
+                    nodes.Add(node);
+                    int i = nodes.Count - 1, j;
+                    while (i > 0 && nodes[j = (i - 1) / 2].heuristic > nodes[i].heuristic)
+                    {   //while *parent(i) > *i:
+                        Node temp = nodes[j]; //*i <=> *parent(i)
+                        nodes[j]  = nodes[i]; //...
+                        nodes[i]  = temp;     //...
+                        i         = j;        //i = parent(i)
+                    }
                 }
             }
 
@@ -319,194 +414,7 @@ namespace SuperUltraAwesomeAI
 
                 return top;
             }
-        }
-		
-        //IDS uninformed search
-        public string IDS()
-        {
-            string s;
-            int i = 1;
-            do  s = DLS(i++);
-            while (s == "failed");
-            return s;
-        }
-
-        //DLS uninformed search - recursive implementation
-        public string DLS(int l)
-        {
-            DLSNode sol = null;
-            var     set = new HashSet<string>();   
-            void FindSolution(DLSNode n)
-            {
-                Move(n.action);
-                string state_str = GetBoardString();
-                if (!set.Contains(state_str))
-                {
-                    set.Add(state_str);
-                    if (CanReachGoal())
-                    {
-                        sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
-                    }
-                    else
-                    {
-                        if (n.height < l - 1 && sol == null)
-                        {
-                            string[] moves = PossibleMoves();
-                            for (int i = 0; i < moves.Length && sol == null; i++)
-                            {
-                                FindSolution(new DLSNode(n, moves[i], n.height + 1));
-                            }
-                        }
-                    }
-                }
-                Move(OppositeMove(n.action));
-            }
-            FindSolution(new DLSNode(null, null, 0));
-            return sol.GetSolution();
-        }
-
-        class BFSNode
-        {
-            public readonly BFSNode  parent;
-            public readonly string   action;
-            public readonly RushHour state;
-            public BFSNode( BFSNode  p ,
-                            RushHour r ,
-                            string   a )
-            {
-                action = a;
-                parent = p;
-                state  = r?.Clone();
-            }
-            public string GetSolution()
-            {
-                BFSNode ans = this;
-                string  s   = string.Empty;
-                while (ans != null)
-                {
-                    s = ans.action + " " + s;
-                    ans = ans.parent;
-                }
-                return s;
-            }
-        }
-
-        //BFS uninformed-search
-        public string BFS()
-        {
-            var set     = new HashSet<string> { GetBoardString() };
-            var queue   = new Queue<BFSNode>();
-            BFSNode ans = null;
-
-            //Insert all possible moves to the queue
-            foreach (var move in PossibleMoves())
-            {
-                RushHour r = Clone();
-                r.Move(move);
-                set.Add(r.GetBoardString());
-                queue.Enqueue(new BFSNode(null, r, move));
-            }
-            while (queue.Count > 0 && ans == null)
-            {   //While there are possible moves and we didn't find solution
-                var top = queue.Dequeue(); //Get from the heap the best move
-                if (top.state.CanReachGoal())
-                {   //If nothing blocks the red car
-                    ans = new BFSNode(top, null, "XR" + (BOARD_SIZE - cars['X'].posX));
-                }
-                else
-                {   //Add to the heap every possible move from current state
-                    var moves = top.state.PossibleMoves();
-                    for (int i = 0; i < moves.Length; i++)
-                    {
-                        string move = moves[i];
-                        RushHour r = top.state.Clone();
-                        r.Move(move);
-                        string state_str = r.GetBoardString();
-                        if (!set.Contains(state_str))
-                        {
-                            set.Add(state_str);
-                            if (r.CanReachGoal())
-                            {
-                                ans = new BFSNode(new BFSNode(top, r, move), null, "XR" + (BOARD_SIZE - r.cars['X'].posX));
-                            }
-                            else
-                            {
-                                queue.Enqueue(new BFSNode(top, r, move));
-                            }
-                        }
-                    }
-                }
-            }
-
-            return ans.GetSolution();
-        }
-
-        public string GetBoardString()
-        {
-            string s = string.Empty;
-            for (int i = 0; i < BOARD_SIZE; i++)
-            {
-                for (int j = 0; j < BOARD_SIZE; j++)
-                {
-                    s += board[i, j];
-                }
-            }
-            return s;
-        }
-
-        //Best-first search informed search
-        public string BestFS()
-        {
-            var  heap = new NodesMinHeap();
-            var  set  = new HashSet<string> { GetBoardString() };
-            Node ans  = null;
-
-            //Insert all possible moves to the heap
-            foreach (var move in PossibleMoves())
-            {
-                RushHour r = Clone();
-                r.Move(move);
-                set.Add(r.GetBoardString());
-                heap.Insert(new Node(null, r, move, 1));
-            }
-
-            while (heap.Count > 0 && ans == null)
-            {   //While there are possible moves and we didn't find solution
-                var top = heap.Remove(); //Get from the heap the best move
-                if (top.state.CanReachGoal())
-                {   //If nothing blocks the red car
-                    ans = new Node(top, null, "XR" + (BOARD_SIZE - cars['X'].posX), top.height + 1);
-                }
-                else
-                {   //Add to the heap every possible move from current state
-                    foreach (var move in top.state.PossibleMoves())
-                    {
-                        RushHour r = top.state.Clone();
-                        r.Move(move);
-                        string state_str = r.GetBoardString();
-                        if (!set.Contains(state_str))
-                        {
-                            set.Add(state_str);
-                            if (r.CanReachGoal())
-                            {
-                                ans = new Node(new Node(top, r, move, top.height + 1), null, "XR" + (BOARD_SIZE - r.cars['X'].posX), top.height + 2);
-                            }
-                            heap.Insert(new Node(top, r, move, top.height + 1));
-                        }
-                    }
-                }
-            }
-
-            //Get the solution string
-            string s = string.Empty;
-            while (ans != null)
-            {
-                s   = ans.action + " " + s;
-                ans = ans.parent;
-            }
-
-            return s;
-        }
+        }		
     }
 
     public class Program
