@@ -388,12 +388,11 @@ namespace SuperUltraAwesomeAI
             }
         }
 
-        //Like BFS but with max queue size
-        public string SmartBFS()
+        //BFS uninformed-search
+        public string BFS()
         {
-            const int MAX_QUEUE_SIZE = 1500;
-
-            var queue   = new Queue<BFSNode>(MAX_QUEUE_SIZE);
+            var set     = new HashSet<string> { GetBoardString() };
+            var queue   = new Queue<BFSNode>();
             BFSNode ans = null;
 
             //Insert all possible moves to the queue
@@ -401,8 +400,8 @@ namespace SuperUltraAwesomeAI
             {
                 RushHour r = Clone();
                 r.Move(move);
-                if (queue.Count < MAX_QUEUE_SIZE)
-                    queue.Enqueue(new BFSNode(null, r, move));
+                set.Add(r.GetBoardString());
+                queue.Enqueue(new BFSNode(null, r, move));
             }
             while (queue.Count > 0 && ans == null)
             {   //While there are possible moves and we didn't find solution
@@ -411,21 +410,26 @@ namespace SuperUltraAwesomeAI
                 {   //If nothing blocks the red car
                     ans = new BFSNode(top, null, "XR" + (BOARD_SIZE - cars['X'].posX));
                 }
-                else if (queue.Count < MAX_QUEUE_SIZE)
+                else
                 {   //Add to the heap every possible move from current state
                     var moves = top.state.PossibleMoves();
-                    for (int i = 0; i < moves.Length && queue.Count < MAX_QUEUE_SIZE; i++)
+                    for (int i = 0; i < moves.Length; i++)
                     {
                         string move = moves[i];
                         RushHour r = top.state.Clone();
                         r.Move(move);
-                        if (r.CanReachGoal())
+                        string state_str = r.GetBoardString();
+                        if (!set.Contains(state_str))
                         {
-                            ans = new BFSNode(new BFSNode(top, r, move), null, "XR" + (BOARD_SIZE - r.cars['X'].posX));
-                        }
-                        else
-                        {
-                            queue.Enqueue(new BFSNode(top, r, move));
+                            set.Add(state_str);
+                            if (r.CanReachGoal())
+                            {
+                                ans = new BFSNode(new BFSNode(top, r, move), null, "XR" + (BOARD_SIZE - r.cars['X'].posX));
+                            }
+                            else
+                            {
+                                queue.Enqueue(new BFSNode(top, r, move));
+                            }
                         }
                     }
                 }
@@ -558,21 +562,22 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
             Stopwatch s = new Stopwatch();
-            double c    = 0;
-            TimeSpan t  = TimeSpan.Zero;
+            double    c = 0;
+            TimeSpan  t = TimeSpan.Zero;
             string[] levels = k.Split('\n');
             foreach (var item in levels)
             {
-                var task = Task.Run(() => new RushHour(item).SmartBFS());
+                var task = Task.Run(() => new RushHour(item).BFS());
                 s.Start();
                 bool finished = task.Wait(TimeSpan.FromSeconds(20));
                 s.Stop();
                 t += s.Elapsed / levels.Length;
                 if (finished)
                 {
-                    int len = task.Result.Split(' ').Length;
+                    int len = task.Result.Split(' ').Length - 1;
                     Console.WriteLine("Succeded - " + len + " - " + i++);
                     c += len / (double)levels.Length;
+                    Console.WriteLine(task.Result);
                 }
                 else
                 {
