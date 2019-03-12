@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
+using static System.Math;
 
 namespace SuperUltraAwesomeAI
 {
@@ -15,6 +17,7 @@ namespace SuperUltraAwesomeAI
         public float dnRatio;
         public string solutionStr;
         public int max;
+        public int min;
         public LabAnswer() { }
     }
     class RushHour
@@ -70,7 +73,7 @@ namespace SuperUltraAwesomeAI
                 }
             }
             FindSolution(new DLSNode(null, null, 0));
-            return sol.GetSolution();
+            return sol?.GetSolution();
         }
 
         //IDS uninformed search
@@ -79,7 +82,7 @@ namespace SuperUltraAwesomeAI
             string s;
             int i = 1;
             do s = DLS(i++);
-            while (s == "failed");
+            while (s == null);
             return s;
         }
 
@@ -88,16 +91,15 @@ namespace SuperUltraAwesomeAI
         ///</summary>
         public LabAnswer BestFS()
         {
-            var  heap = new NodesMinHeap(new Node(null, this, null, 0));
+            Node root = new Node(null, this, null, 0);
+            var  heap = new NodesMinHeap(root);
             Node ans  = null;
             LabAnswer result = new LabAnswer();
             int totalNumberOfScannedNodes = 1;
-            int min = 0, max = 0;
 
             while (ans == null)
             {   //While we haven't found solution
                 var top = heap.Remove(); //Get from the heap the best move
-                if (max < top.height) max = top.height;
                 foreach (var move in top.state.PossibleMoves())
                 {
                     totalNumberOfScannedNodes++;
@@ -118,7 +120,8 @@ namespace SuperUltraAwesomeAI
             result.solutionStr = ans.GetSolution();
             result.numberOfNodesScanned = totalNumberOfScannedNodes;
             result.dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes;
-            result.max = max > ans.height ? max : ans.height;
+            result.max = root.MaxDepth();
+            result.min = root.MinDepth();
             return result;
         }
 
@@ -156,16 +159,18 @@ namespace SuperUltraAwesomeAI
         //Node used in the BestFS function
         class Node
         {
-            public readonly Node     parent;
-            public readonly string   action;
-            public readonly RushHour state;
-            public readonly int      heuristic;
-            public readonly int      height;
-            public Node( Node     p ,
+            public readonly Node       parent;
+            public readonly string     action;
+            public readonly RushHour   state;
+            public readonly int        heuristic;
+            public readonly int        height;
+            public readonly List<Node> sons;
+            public Node( Node     p  ,
                          RushHour st ,
-                         string   a ,
-                         int      h )
+                         string   a  ,
+                         int      h  )
             {
+                sons = new List<Node>();
                 action = a;
                 parent = p;
                 height = h;
@@ -174,7 +179,13 @@ namespace SuperUltraAwesomeAI
                     state     = st.Clone();
                     heuristic = st.Heuristic1() + h;
                 }
+                if (p != null)
+                {
+                    p.sons.Add(this);
+                }
             }
+            public int MinDepth() => sons.Count > 0 ? sons.Select(n => n.MinDepth()).Min() + 1 : 0;
+            public int MaxDepth() => sons.Count > 0 ? sons.Select(n => n.MaxDepth()).Max() + 1 : 0;
             public string GetSolution()
             {
                 Node   sol = this;
@@ -528,6 +539,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         outputFile.WriteLine("Solution: "+_tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
                         outputFile.WriteLine(String.Format("Maximum reached depth:{0}", _tr.max));
+                        outputFile.WriteLine(String.Format("Minimum reached depth:{0}", _tr.min));
                     }
                     else
                     {
