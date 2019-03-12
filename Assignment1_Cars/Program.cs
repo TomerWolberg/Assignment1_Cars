@@ -117,8 +117,8 @@ namespace SuperUltraAwesomeAI
 
             result.solutionStr = ans.GetSolution();
             result.numberOfNodesScanned = totalNumberOfScannedNodes;
-            result.dnRatio = ans.height / totalNumberOfScannedNodes;
-            result.max = max;
+            result.dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes;
+            result.max = max > ans.height ? max : ans.height;
             return result;
         }
 
@@ -508,6 +508,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             int       level       = 1;
             string    finalOutput = string.Empty;
             string    docPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            int       avgDepth    = 0;
 
             using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "Lab1_Output.txt")))
             {
@@ -522,26 +523,21 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     {
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
-
-                        outputFile.WriteLine("Succeded - " + len + " - " + level++);
-                        outputFile.WriteLine(_tr.solutionStr);
-                        outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F5}", _tr.numberOfNodesScanned, _tr.dnRatio));
+                        avgDepth += _tr.max;
+                        outputFile.WriteLine("Level " + level++ + " - Succeded in " + len + " moves");
+                        outputFile.WriteLine("Solution: "+_tr.solutionStr);
+                        outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
                         outputFile.WriteLine(String.Format("Maximum reached depth:{0}", _tr.max));
-
-                        /*
-                        Console.WriteLine("Succeded - " + len + " - " + level++);
-                        Console.WriteLine(taskResult);
-                        */
                     }
                     else
                     {
-                        outputFile.WriteLine("Failed - " + level++);
-                        //Console.WriteLine("Failed" + " - " + level++);
+                        outputFile.WriteLine("Level " + level++ + "Failed");
                     }
                     Console.WriteLine(s.Elapsed);
                     s.Reset();
                 }
-                Console.WriteLine("Avg Time  = " + t);
+                outputFile.WriteLine(String.Format("Avg search depth:{0:F3}",avgDepth / level));
+                outputFile.WriteLine("Avg Time  = " + t);
             }
         }
     }
