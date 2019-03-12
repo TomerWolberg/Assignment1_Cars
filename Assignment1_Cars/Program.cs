@@ -31,7 +31,7 @@ namespace SuperUltraAwesomeAI
 
         /* Search algorithms
         ------------------------------------------------------------------------------------------*/
-        //DLS uninformed search
+        //DLS uninformed search - recursive implementaion
         public string DLS( int l )
         {
             DLSNode sol = null;
@@ -39,7 +39,7 @@ namespace SuperUltraAwesomeAI
             void FindSolution(DLSNode n)
             {
                 if (set.Add(GetHash()))
-                {
+                {   //If the state is new
                     if (CanReachGoal())
                     {   //Found solution
                         sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
