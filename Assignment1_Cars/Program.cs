@@ -187,7 +187,7 @@ namespace SuperUltraAwesomeAI
                             var car  = cars[item];
                             car.axis = car.posX == j ? CarDetails.Axis.Y:
                                                        CarDetails.Axis.X;
-                            car.size++;
+                            ++car.size;
                         }
                         else
                         {
