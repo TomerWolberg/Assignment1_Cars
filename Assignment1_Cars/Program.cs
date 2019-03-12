@@ -183,7 +183,6 @@ namespace SuperUltraAwesomeAI
             return action;
         }
 
-        static Random rand = new Random(); //randomize the order of the moves
         string[] PossibleMoves()
         {
             var moves = new List<string>();
@@ -215,15 +214,7 @@ namespace SuperUltraAwesomeAI
                     }
                 }
             }
-
-            //randomize the order of the moves
-            for (int i = 0; i < moves.Count; i++)
-            {
-                int u    = rand.Next(i, moves.Count);
-                var temp = moves[u];
-                moves[u] = moves[i];
-                moves[i] = temp;
-            }
+            
             return moves.ToArray();
         }
 
@@ -260,13 +251,13 @@ namespace SuperUltraAwesomeAI
                 if (r != null)
                 {
                     state     = r.Clone();
-                    heuristic = rand.Next(h);
+                    heuristic = r.Heuristic1();
                 }
             }
         }
         class NodesMinHeap
         {
-            public readonly List<Node> nodes = new List<Node>(500);
+            public readonly List<Node> nodes = new List<Node>();
             public int Count { get => nodes.Count; }
 
             //Add new node to the heap
