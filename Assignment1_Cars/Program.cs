@@ -231,6 +231,17 @@ namespace SuperUltraAwesomeAI
                 action = a;
                 height = h;
             }
+            public string GetSolution()
+            {
+                DLSNode sol = this;
+                string  ans = string.Empty;
+                while (sol.parent != null)
+                {
+                    ans = sol.action + " " + ans;
+                    sol = sol.parent;
+                }
+                return ans;
+            }
         }
 		
         class Node
@@ -324,44 +335,34 @@ namespace SuperUltraAwesomeAI
         public string DLS(int l)
         {
             DLSNode sol = null;
-
+            var     set = new HashSet<string>();   
             void FindSolution(DLSNode n)
             {
                 Move(n.action);
-                string back = OppositeMove(n.action);
-                if (CanReachGoal())
+                string state_str = GetBoardString();
+                if (!set.Contains(state_str))
                 {
-                    sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
-                }
-                else
-                {
-                    if (n.height < l - 1 && sol == null)
+                    set.Add(state_str);
+                    if (CanReachGoal())
                     {
-                        string[] moves = PossibleMoves();
-                        for (int i = 0; i < moves.Length && sol == null; i++)
+                        sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
+                    }
+                    else
+                    {
+                        if (n.height < l - 1 && sol == null)
                         {
-                            FindSolution(new DLSNode(n, moves[i], n.height + 1));
+                            string[] moves = PossibleMoves();
+                            for (int i = 0; i < moves.Length && sol == null; i++)
+                            {
+                                FindSolution(new DLSNode(n, moves[i], n.height + 1));
+                            }
                         }
                     }
                 }
-                Move(back);
+                Move(OppositeMove(n.action));
             }
             FindSolution(new DLSNode(null, null, 0));
-            string ans;
-            if (sol != null)
-            {
-                ans = string.Empty;
-                while (sol.parent != null)
-                {
-                    ans = sol.action + " " + ans;
-                    sol = sol.parent;
-                }
-            }
-            else
-            {
-                ans = "failed";
-            }
-            return ans;
+            return sol.GetSolution();
         }
 
         class BFSNode
@@ -376,6 +377,17 @@ namespace SuperUltraAwesomeAI
                 action = a;
                 parent = p;
                 state  = r?.Clone();
+            }
+            public string GetSolution()
+            {
+                BFSNode ans = this;
+                string  s   = string.Empty;
+                while (ans != null)
+                {
+                    s = ans.action + " " + s;
+                    ans = ans.parent;
+                }
+                return s;
             }
         }
 
@@ -426,15 +438,7 @@ namespace SuperUltraAwesomeAI
                 }
             }
 
-            //Get the solution string
-            string s = string.Empty;
-            while (ans != null)
-            {
-                s = ans.action + " " + s;
-                ans = ans.parent;
-            }
-
-            return s;
+            return ans.GetSolution();
         }
 
         public string GetBoardString()
@@ -509,7 +513,6 @@ namespace SuperUltraAwesomeAI
     {
         public static void Main(string[] args)
         {
-            int i = 0;
             string k =
 @"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
 A..OOOA..B.PXX.BCPQQQ.CP..D.EEFFDGG.
@@ -552,13 +555,14 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
-            Stopwatch s = new Stopwatch();
-            double    c = 0;
-            TimeSpan  t = TimeSpan.Zero;
-            string[] levels = k.Split('\n');
+            Stopwatch s      = new Stopwatch();
+            TimeSpan  t      = TimeSpan.Zero;
+            string[]  levels = k.Split('\n');
+            int       level  = 1;
+
             foreach (var item in levels)
             {
-                var task = Task.Run(() => new RushHour(item).BFS());
+                var task = Task.Run(() => new RushHour(item).IDS());
                 s.Start();
                 bool finished = task.Wait(TimeSpan.FromSeconds(20));
                 s.Stop();
@@ -566,19 +570,17 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                 if (finished)
                 {
                     int len = task.Result.Split(' ').Length - 1;
-                    Console.WriteLine("Succeded - " + len + " - " + i++);
-                    c += len / (double)levels.Length;
+                    Console.WriteLine("Succeded - " + len + " - " + level++);
                     Console.WriteLine(task.Result);
                 }
                 else
                 {
-                    Console.WriteLine("Failed" + " - " + i++);
+                    Console.WriteLine("Failed" + " - " + level++);
                 }
                 Console.WriteLine(s.Elapsed);
                 s.Reset();
             }
-            Console.WriteLine("Nodes = " + c);
-            Console.WriteLine("Time  = " + t);
+            Console.WriteLine("Avg Time  = " + t);
         }
     }
 }
