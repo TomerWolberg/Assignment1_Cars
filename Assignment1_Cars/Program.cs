@@ -1,10 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SuperUltraAwesomeAI
 {
+    /// <summary>
+    ///  Custom return class for returning results for the report
+    /// </summary>
+    public class LabAnswer
+    {
+        public int numberOfNodesScanned;
+        public float dnRatio;
+        public string solutionStr;
+        public int max;
+        public LabAnswer() { }
+    }
     class RushHour
     {
         //Class that helps us track the positions
@@ -18,8 +30,8 @@ namespace SuperUltraAwesomeAI
             public Axis axis;
         }
 
-        /* Variables
-        -------------------------------------*/
+        #region Variables
+
         //           Constants:
         public const int BOARD_SIZE      = 6;
         public const int RED_CAR_Y_INDEX = 2;
@@ -27,10 +39,11 @@ namespace SuperUltraAwesomeAI
         //            Fields:
         Dictionary<char, CarDetails> cars;
         char[,]                      board;
-        /*-----------------------------------*/
 
-        /* Search algorithms
-        ------------------------------------------------------------------------------------------*/
+        #endregion
+
+        #region Search algorithms
+
         //DLS uninformed search - recursive implementaion
         public string DLS( int l )
         {
@@ -70,23 +83,30 @@ namespace SuperUltraAwesomeAI
             return s;
         }
 
-        //Best-first search informed search
-        public string BestFS()
+        ///<summary>
+        ///Best-first search informed search
+        ///</summary>
+        public LabAnswer BestFS()
         {
             var  heap = new NodesMinHeap(new Node(null, this, null, 0));
             Node ans  = null;
+            LabAnswer result = new LabAnswer();
+            int totalNumberOfScannedNodes = 1;
+            int min = 0, max = 0;
 
             while (ans == null)
             {   //While we haven't found solution
                 var top = heap.Remove(); //Get from the heap the best move
+                if (max < top.height) max = top.height;
                 foreach (var move in top.state.PossibleMoves())
                 {
-                    RushHour r = top.state.Clone();
-                    r.Move(move);
-                    Node next = new Node(top, r, move, top.height + 1);
-                    if (r.CanReachGoal())
+                    totalNumberOfScannedNodes++;
+                    RushHour nextState = top.state.Clone();
+                    nextState.Move(move);
+                    Node next = new Node(top, nextState, move, top.height + 1);
+                    if (nextState.CanReachGoal())
                     {   //Found solution
-                        ans = new Node(next, null, "XR" + r.Heuristic2(), top.height + 2);
+                        ans = new Node(next, null, "XR" + nextState.Heuristic2(), top.height + 2);
                     }
                     else
                     {   //Add node to the heap (if the state is new)
@@ -95,12 +115,17 @@ namespace SuperUltraAwesomeAI
                 }
             }
 
-            return ans.GetSolution();
+            result.solutionStr = ans.GetSolution();
+            result.numberOfNodesScanned = totalNumberOfScannedNodes;
+            result.dnRatio = ans.height / totalNumberOfScannedNodes;
+            result.max = max;
+            return result;
         }
-        /*----------------------------------------------------------------------------------------*/
 
-        /* Nodes
-        -------------------------------------------*/
+        #endregion
+
+        #region Nodes
+
         //Node used in the DLS function
         class DLSNode
         {
@@ -137,17 +162,17 @@ namespace SuperUltraAwesomeAI
             public readonly int      heuristic;
             public readonly int      height;
             public Node( Node     p ,
-                         RushHour r ,
+                         RushHour st ,
                          string   a ,
                          int      h )
             {
                 action = a;
                 parent = p;
                 height = h;
-                if (r != null)
+                if (st != null)
                 {
-                    state     = r.Clone();
-                    heuristic = r.Heuristic1() + h;
+                    state     = st.Clone();
+                    heuristic = st.Heuristic1() + h;
                 }
             }
             public string GetSolution()
@@ -162,10 +187,11 @@ namespace SuperUltraAwesomeAI
                 return ans;
             }
         }
-        /*-----------------------------------------*/
 
-        /* Constructors
-        --------------------------------------------------------------------------*/
+        #endregion
+
+        #region Constructors
+        
         //Private empty C'tor
         private RushHour() { }
 
@@ -203,10 +229,10 @@ namespace SuperUltraAwesomeAI
                 }
             }
         }
-        /*------------------------------------------------------------------------*/
+        #endregion
 
-        /* Heuristics
-        ------------------------------------------------------------------*/
+        #region Heuristics
+        
         //Number of cars blocking the red car
         int Heuristic1()
         {
@@ -222,9 +248,15 @@ namespace SuperUltraAwesomeAI
 
         //Distance from goal
         int Heuristic2() => BOARD_SIZE - cars['X'].posX;
-        /*-----------------------------------------------------------------*/
 
-        //Create a deep copy of the RushHour class
+        #endregion
+
+        ///<summary>
+        ///Create a deep copy of the RushHour class
+        ///</summary>
+        ///<returns>
+        ///A copy of RushHour class
+        /// </returns>
         public RushHour Clone()
         {
             var dict = new Dictionary<char, CarDetails>(cars.Count);
@@ -249,7 +281,7 @@ namespace SuperUltraAwesomeAI
         //Check if there aren't any cars that are blocking the way
         bool CanReachGoal() => Heuristic1() == 0;
 
-        //Returns string that represent the board state
+        ///<summary>Returns string that represent the board state</summary>
         public string GetHash()
         {
             string s = string.Empty;
@@ -263,8 +295,8 @@ namespace SuperUltraAwesomeAI
             return s;
         }
 
-        //Moves a car according to a given action.
-        //For example: AU2 moves car A 2 
+        ///<summary>Moves a car according to a given action.</summary>
+        ///<example>For example: AU2 moves car A up by 2 cells </example>
         void Move( string action )
         {
             if (action != null)
@@ -296,7 +328,12 @@ namespace SuperUltraAwesomeAI
             }
         }
 
-        //returns the opposite move: AL4 -> AR4, BU1 -> BD1, ...
+        /// <summary>
+        /// Returns the opposite move
+        /// </summary>
+        /// <example>
+        /// AL4 -> AR4, BU1 -> BD1
+        /// </example>
         string OppositeMove( string action )
         {
             if(action != null)
@@ -421,8 +458,7 @@ namespace SuperUltraAwesomeAI
     {
         public static void Main(string[] args)
         {
-            string k =
-@"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
+            string text = @"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
 A..OOOA..B.PXX.BCPQQQ.CP..D.EEFFDGG.
 .............XXO...AAO.P.B.O.P.BCC.P
 O..P..O..P..OXXP....AQQQ..A..B..RRRB
@@ -463,32 +499,50 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
-            Stopwatch s      = new Stopwatch();
-            TimeSpan  t      = TimeSpan.Zero;
-            string[]  levels = k.Split('\n');
-            int       level  = 1;
+            int waitingTime = 0;
+            if ( args.Length == 0 ) waitingTime = 10;
+            else waitingTime = Int32.Parse(args[0]);
+            Stopwatch s           = new Stopwatch();
+            TimeSpan  t           = TimeSpan.Zero;
+            string[]  levels      = text.Split('\n');
+            int       level       = 1;
+            string    finalOutput = string.Empty;
+            string    docPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-            foreach (var item in levels)
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "Lab1_Output.txt")))
             {
-                var task = Task.Run(() => new RushHour(item).BestFS());
-                s.Start();
-                bool finished = task.Wait(TimeSpan.FromSeconds(20));
-                s.Stop();
-                t += s.Elapsed / levels.Length;
-                if (finished)
+                foreach (var item in levels)
                 {
-                    int len = task.Result.Split(' ').Length - 1;
-                    Console.WriteLine("Succeded - " + len + " - " + level++);
-                    Console.WriteLine(task.Result);
+                    var task = Task.Run(() => new RushHour(item).BestFS());
+                    s.Start();
+                    bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
+                    s.Stop();
+                    t += s.Elapsed / levels.Length;
+                    if (finished)
+                    {
+                        LabAnswer _tr = task.Result;
+                        int len = _tr.solutionStr.Split(' ').Length - 1;
+
+                        outputFile.WriteLine("Succeded - " + len + " - " + level++);
+                        outputFile.WriteLine(_tr.solutionStr);
+                        outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F5}", _tr.numberOfNodesScanned, _tr.dnRatio));
+                        outputFile.WriteLine(String.Format("Maximum reached depth:{0}", _tr.max));
+
+                        /*
+                        Console.WriteLine("Succeded - " + len + " - " + level++);
+                        Console.WriteLine(taskResult);
+                        */
+                    }
+                    else
+                    {
+                        outputFile.WriteLine("Failed - " + level++);
+                        //Console.WriteLine("Failed" + " - " + level++);
+                    }
+                    Console.WriteLine(s.Elapsed);
+                    s.Reset();
                 }
-                else
-                {
-                    Console.WriteLine("Failed" + " - " + level++);
-                }
-                Console.WriteLine(s.Elapsed);
-                s.Reset();
+                Console.WriteLine("Avg Time  = " + t);
             }
-            Console.WriteLine("Avg Time  = " + t);
         }
     }
 }
