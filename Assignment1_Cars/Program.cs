@@ -93,6 +93,7 @@ namespace SuperUltraAwesomeAI
         {
             Node root = new Node(null, this, null, 0);
             var  heap = new NodesMinHeap(root);
+            var  set  = new HashSet<string>() { GetHash() };
             Node ans  = null;
             LabAnswer result = new LabAnswer();
             int totalNumberOfScannedNodes = 1;
@@ -102,17 +103,20 @@ namespace SuperUltraAwesomeAI
                 var top = heap.Remove(); //Get from the heap the best move
                 foreach (var move in top.state.PossibleMoves())
                 {
-                    totalNumberOfScannedNodes++;
                     RushHour nextState = top.state.Clone();
                     nextState.Move(move);
-                    Node next = new Node(top, nextState, move, top.height + 1);
-                    if (nextState.CanReachGoal())
-                    {   //Found solution
-                        ans = new Node(next, null, "XR" + nextState.Heuristic2(), top.height + 2);
-                    }
-                    else
-                    {   //Add node to the heap (if the state is new)
-                        heap.Insert(next);
+                    if (set.Add(nextState.GetHash()))
+                    {
+                        totalNumberOfScannedNodes++;
+                        Node next = new Node(top, nextState, move, top.height + 1);
+                        if (nextState.CanReachGoal())
+                        {   //Found solution
+                            ans = new Node(next, null, "XR" + nextState.Heuristic2(), top.height + 2);
+                        }
+                        else
+                        {   //Add node to the heap (if the state is new)
+                            heap.Insert(next);
+                        }
                     }
                 }
             }
@@ -397,9 +401,8 @@ namespace SuperUltraAwesomeAI
         //Min heap struct for the BestFS Node
         struct NodesMinHeap
         {
-            public readonly List<Node>      nodes;
-            public readonly HashSet<string> set;
-
+            public readonly List<Node> nodes;
+            
             //Number of items in the heap
             public int Count { get => nodes.Count; }
 
@@ -407,24 +410,20 @@ namespace SuperUltraAwesomeAI
             public NodesMinHeap(Node first)
             {
                 nodes = new List<Node>();
-                set   = new HashSet<string>();
                 Insert(first);
             }
 
             //If the node wasn't already in the heap adds the new node to the heap
             public void Insert( Node node )
             {
-                if (set.Add(node.state.GetHash()))
-                {
-                    nodes.Add(node);
-                    int i = nodes.Count - 1, j;
-                    while (i > 0 && nodes[j = (i - 1) / 2].heuristic > nodes[i].heuristic)
-                    {   //while *parent(i) > *i:
-                        Node temp = nodes[j]; //*i <=> *parent(i)
-                        nodes[j]  = nodes[i]; //...
-                        nodes[i]  = temp;     //...
-                        i         = j;        //i = parent(i)
-                    }
+                nodes.Add(node);
+                int i = nodes.Count - 1, j;
+                while (i > 0 && nodes[j = (i - 1) / 2].heuristic > nodes[i].heuristic)
+                {   //while *parent(i) > *i:
+                    Node temp = nodes[j]; //*i <=> *parent(i)
+                    nodes[j]  = nodes[i]; //...
+                    nodes[i]  = temp;     //...
+                    i         = j;        //i = parent(i)
                 }
             }
 
