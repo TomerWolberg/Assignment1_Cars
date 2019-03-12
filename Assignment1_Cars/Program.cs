@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
-using static System.Math;
 
 namespace SuperUltraAwesomeAI
 {
