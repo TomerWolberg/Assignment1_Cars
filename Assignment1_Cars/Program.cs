@@ -29,8 +29,10 @@ namespace SuperUltraAwesomeAI
     }
     class RushHour
     {
-        //Class that helps us track the positions
-        //and movements of the cars
+        /// <summary>
+        /// Class that helps us track the positions
+        /// and movements of the cars
+        /// </summary>
         class CarDetails
         {
             public enum Axis { X, Y };
@@ -189,7 +191,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic3() + h;
+                    heuristic = st.Heuristic1() + h;
                 }
                 if (p != null)
                 {
@@ -600,7 +602,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
-                        outputFile.WriteLine("Level " + level++ + " - Succeded in " + len + " moves");
+                        outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
                         outputFile.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr.max, _tr.min));
