@@ -57,14 +57,16 @@ namespace SuperUltraAwesomeAI
         #region Search algorithms
 
         //DLS uninformed search - recursive implementaion
-        public string DLS( int l )
+        public LabAnswer DLS( int l )
         {
-            DLSNode sol = null;
-            var     set = new HashSet<string>();
+            DLSNode sol        = null;
+            var     set        = new HashSet<string>();
+            int     nodesCount = 0;
             void FindSolution(DLSNode n)
             {
                 if (set.Add(GetHash()))
                 {   //If the state is new
+                    nodesCount++;
                     if (CanReachGoal())
                     {   //Found solution
                         sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
@@ -81,18 +83,36 @@ namespace SuperUltraAwesomeAI
                     }
                 }
             }
-            FindSolution(new DLSNode(null, null, 0));
-            return sol?.GetSolution();
+            var root = new DLSNode(null, null, 0);
+            FindSolution(root);
+            
+            return sol == null ?
+            new LabAnswer
+            {
+                numberOfNodesScanned = nodesCount
+            } :
+            new LabAnswer
+            {
+                solutionStr          = sol.GetSolution(),
+                numberOfNodesScanned = nodesCount,
+                dnRatio              = (float)sol.height / (float)nodesCount,
+                max                  = root.MaxDepth(),
+                min                  = root.MinDepth()
+            };
         }
 
         //IDS uninformed search
-        public string IDS()
+        public LabAnswer IDS()
         {
-            string s;
-            int i = 1;
-            do s = DLS(i++);
-            while (s == null);
-            return s;
+            LabAnswer ans;
+            int i = 1, nodesCount = 0;
+            do
+            {
+                ans         = DLS(i++);
+                nodesCount += ans.numberOfNodesScanned;
+            } while (ans.solutionStr == null);
+            ans.numberOfNodesScanned = nodesCount;
+            return ans;
         }
 
         ///<summary>
@@ -149,14 +169,22 @@ namespace SuperUltraAwesomeAI
             public readonly DLSNode parent;
             public readonly string  action;
             public readonly int     height;
+            private readonly List<DLSNode> sons;
             public DLSNode( DLSNode p ,
                             string  a ,
                             int     h )
             {
+                sons   = new List<DLSNode>();
                 parent = p;
                 action = a;
                 height = h;
+                if (p != null)
+                {
+                    p.sons.Add(this);
+                }
             }
+            public int MinDepth() => sons.Count > 0 ? sons.Select(n => n.MinDepth()).Min() + 1 : 0;
+            public int MaxDepth() => sons.Count > 0 ? sons.Select(n => n.MaxDepth()).Max() + 1 : 0;
             public string GetSolution()
             {
                 DLSNode sol = this;
@@ -191,7 +219,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic3() + h;
+                    heuristic = st.Heuristic3();
                 }
                 if (p != null)
                 {
