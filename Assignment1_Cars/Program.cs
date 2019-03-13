@@ -191,7 +191,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic1() + h;
+                    heuristic = st.Heuristic3() + h;
                 }
                 if (p != null)
                 {
@@ -280,9 +280,10 @@ namespace SuperUltraAwesomeAI
         /// <param name="carIdentifier"> Name of a car to check</param>
         /// <param name="position">Position we want to clear for movement</param>
         /// <param name="depth">Depth left</param>
-        /// <returns></returns>
-        int Heuristic3(int depth = 3, char carIdentifier = 'X', int position = -1)
+        /// <returns>Score of current position</returns>
+        int Heuristic3(int depth = 4, char carIdentifier = 'X', int position = -1)
         {
+            const int CAR_IN_A_WAY_PENALTY = 2;
             if (depth == 0) return 0;
             int count = 0;
             if (!cars.Keys.Contains(carIdentifier)) return -1;
@@ -292,13 +293,12 @@ namespace SuperUltraAwesomeAI
             {
                 // First call will have position as -1
                 if (position == -1) position = car.posY;
-
                 for (int i = car.posX + car.size; i < BOARD_SIZE; i++)
                 {
                     char obst = board[car.posY, i];
                     if (obst == '.') count++;
                     else
-                        count += 5 + Heuristic3(depth - 1, obst, car.posY);
+                        count += CAR_IN_A_WAY_PENALTY + Heuristic3(depth - 1, obst, car.posY);
                 }
             }
             else
@@ -313,7 +313,7 @@ namespace SuperUltraAwesomeAI
                     {
                         char obst = board[(car.posY * moveX) + (i * moveY), (car.posX * moveY) + (i * moveX)];
                         if (obst != '.' && obst != carIdentifier)
-                            count += 5 + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
+                            count += CAR_IN_A_WAY_PENALTY + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
                     }
                 }
                 //check down the axis
@@ -323,7 +323,7 @@ namespace SuperUltraAwesomeAI
                     {
                         char obst = board[(car.posY * moveX) + (i * moveY), (car.posX * moveY) + (i * moveX)];
                         if (obst != '.' && obst != carIdentifier)
-                            count += 5 + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
+                            count += CAR_IN_A_WAY_PENALTY + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
                     }
                 }
             }
