@@ -110,8 +110,7 @@ namespace SuperUltraAwesomeAI
             {
                 ans         = DLS(i++);
                 nodesCount += ans.numberOfNodesScanned;
-            }
-            while (ans.solutionStr == null);
+            } while (ans.solutionStr == null);
             ans.numberOfNodesScanned = nodesCount;
             return ans;
         }
