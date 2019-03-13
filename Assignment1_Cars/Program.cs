@@ -219,7 +219,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic3();
+                    heuristic = st.Heuristic3() + h;
                 }
                 if (p != null)
                 {
