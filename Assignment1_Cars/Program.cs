@@ -17,7 +17,6 @@ namespace SuperUltraAwesomeAI
         public string solutionStr;
         public int max;
         public int min;
-        public LabAnswer() { }
     }
     class RushHour
     {
@@ -94,7 +93,6 @@ namespace SuperUltraAwesomeAI
             var  heap = new NodesMinHeap(root);
             var  set  = new HashSet<string>() { GetHash() };
             Node ans  = null;
-            LabAnswer result = new LabAnswer();
             int totalNumberOfScannedNodes = 1;
 
             while (ans == null)
@@ -105,7 +103,7 @@ namespace SuperUltraAwesomeAI
                     RushHour nextState = top.state.Clone();
                     nextState.Move(move);
                     if (set.Add(nextState.GetHash()))
-                    {
+                    {   //If the state is new
                         totalNumberOfScannedNodes++;
                         Node next = new Node(top, nextState, move, top.height + 1);
                         if (nextState.CanReachGoal())
@@ -120,12 +118,14 @@ namespace SuperUltraAwesomeAI
                 }
             }
 
-            result.solutionStr = ans.GetSolution();
-            result.numberOfNodesScanned = totalNumberOfScannedNodes;
-            result.dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes;
-            result.max = root.MaxDepth();
-            result.min = root.MinDepth();
-            return result;
+            return new LabAnswer
+            {
+                solutionStr          = ans.GetSolution(),
+                numberOfNodesScanned = totalNumberOfScannedNodes,
+                dnRatio              = (float)ans.height / (float)totalNumberOfScannedNodes,
+                max                  = root.MaxDepth(),
+                min                  = root.MinDepth()
+            };
         }
 
         #endregion
@@ -173,7 +173,7 @@ namespace SuperUltraAwesomeAI
                          string   a  ,
                          int      h  )
             {
-                sons = new List<Node>();
+                sons   = new List<Node>();
                 action = a;
                 parent = p;
                 height = h;
@@ -400,19 +400,20 @@ namespace SuperUltraAwesomeAI
         //Min heap struct for the BestFS Node
         struct NodesMinHeap
         {
+            //Heap data
             public readonly List<Node> nodes;
             
             //Number of items in the heap
-            public int Count { get => nodes.Count; }
+            public int Count => nodes.Count;
 
             //Constructor
-            public NodesMinHeap(Node first)
+            public NodesMinHeap( Node first )
             {
                 nodes = new List<Node>();
                 Insert(first);
             }
 
-            //If the node wasn't already in the heap adds the new node to the heap
+            //Adds the new node to the heap
             public void Insert( Node node )
             {
                 nodes.Add(node);
@@ -464,7 +465,7 @@ namespace SuperUltraAwesomeAI
     }
 
     public class Program
-    {
+    {        
         public static void Main(string[] args)
         {
             string text = @"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
