@@ -12,8 +12,17 @@ namespace SuperUltraAwesomeAI
     /// </summary>
     public class LabAnswer
     {
+        /// <summary>
+        /// Number of nodes scanned
+        /// </summary>
         public int numberOfNodesScanned;
+        /// <summary>
+        /// Depth of solution to scanned nodes ratio
+        /// </summary>
         public float dnRatio;
+        /// <summary>
+        /// Solution to the problem as a list of steps
+        /// </summary>
         public string solutionStr;
         public int max;
         public int min;
@@ -180,7 +189,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic1() + h;
+                    heuristic = st.Heuristic3() + h;
                 }
                 if (p != null)
                 {
@@ -263,6 +272,62 @@ namespace SuperUltraAwesomeAI
         //Distance from goal
         int Heuristic2() => BOARD_SIZE - cars['X'].posX;
 
+        /// <summary>
+        /// This heuristic will check how many cars have to be moved
+        /// </summary>
+        /// <param name="carIdentifier"> Name of a car to check</param>
+        /// <param name="position">Position we want to clear for movement</param>
+        /// <param name="depth">Depth left</param>
+        /// <returns></returns>
+        int Heuristic3(int depth = 3, char carIdentifier = 'X', int position = -1)
+        {
+            if (depth == 0) return 0;
+            int count = 0;
+            if (!cars.Keys.Contains(carIdentifier)) return -1;
+            // First call will have a default car (red car)
+            CarDetails car = cars[carIdentifier];
+            if (carIdentifier == 'X' && position == -1)
+            {
+                // First call will have position as -1
+                if (position == -1) position = car.posY;
+
+                for (int i = car.posX + car.size; i < BOARD_SIZE; i++)
+                {
+                    char obst = board[car.posY, i];
+                    if (obst == '.') count++;
+                    else
+                        count += 5 + Heuristic3(depth - 1, obst, car.posY);
+                }
+            }
+            else
+            {
+                // Since Axis is an enum, X==0 & Y==1. Thus, one of these will be one and the other one zero:
+                int moveX = 1 - (int)car.axis;
+                int moveY = (int)car.axis;
+                // Check if there is enough space for the car up the axis
+                if ((car.size - 1) * moveX + (car.size - 1) * moveY < position)
+                {
+                    for (int i = (car.posX * moveX + car.posY * moveY); i >= 0; i--)
+                    {
+                        char obst = board[(car.posY * moveX) + (i * moveY), (car.posX * moveY) + (i * moveX)];
+                        if (obst != '.' && obst != carIdentifier)
+                            count += 5 + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
+                    }
+                }
+                //check down the axis
+                if ((BOARD_SIZE - car.size) * moveX + (BOARD_SIZE - car.size) * moveY > position)
+                {
+                    for (int i = ((car.posX + car.size - 1) * moveX + (car.posY + car.size - 1) * moveY); i < BOARD_SIZE; i++)
+                    {
+                        char obst = board[(car.posY * moveX) + (i * moveY), (car.posX * moveY) + (i * moveX)];
+                        if (obst != '.' && obst != carIdentifier)
+                            count += 5 + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
+                    }
+                }
+            }
+            return count;
+        }
+
         #endregion
 
         ///<summary>
@@ -310,7 +375,7 @@ namespace SuperUltraAwesomeAI
         }
 
         ///<summary>Moves a car according to a given action.</summary>
-        ///<example>For example: AU2 moves car A up by 2 cells </example>
+        ///<example>AU2 moves car A up by 2 cells </example>
         void Move( string action )
         {
             if (action != null)
@@ -529,22 +594,23 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
                     s.Stop();
                     t += s.Elapsed / levels.Length;
+                    TimeSpan ts = s.Elapsed;
                     if (finished)
                     {
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
                         outputFile.WriteLine("Level " + level++ + " - Succeded in " + len + " moves");
-                        outputFile.WriteLine("Solution: "+_tr.solutionStr);
+                        outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
-                        outputFile.WriteLine(String.Format("Maximum reached depth:{0}", _tr.max));
-                        outputFile.WriteLine(String.Format("Minimum reached depth:{0}", _tr.min));
+                        outputFile.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr.max, _tr.min));
+                        outputFile.WriteLine(String.Format("Solved in : {0:00}:{1:000}", ts.Seconds, ts.Milliseconds));
                     }
                     else
                     {
                         outputFile.WriteLine("Level " + level++ + "Failed");
+                        outputFile.WriteLine("Timeout reached at {0:00}.{1:000}",ts.Seconds,ts.Milliseconds);
                     }
-                    Console.WriteLine(s.Elapsed);
                     s.Reset();
                 }
                 outputFile.WriteLine(String.Format("Avg search depth:{0:F3}",avgDepth / level));
