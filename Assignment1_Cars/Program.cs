@@ -306,7 +306,7 @@ namespace SuperUltraAwesomeAI
                 // Since Axis is an enum, X==0 & Y==1. Thus, one of these will be one and the other one zero:
                 int moveX = 1 - (int)car.axis;
                 int moveY = (int)car.axis;
-                // Check if there is enough space for the car up the axis
+                // Check if there is enough space for the car up the axis (UP or LEFT)
                 if ((car.size - 1) * moveX + (car.size - 1) * moveY < position)
                 {
                     for (int i = (car.posX * moveX + car.posY * moveY); i >= 0; i--)
@@ -316,7 +316,7 @@ namespace SuperUltraAwesomeAI
                             count += CAR_IN_A_WAY_PENALTY + Heuristic3(depth - 1, obst, (car.posY * moveX) + (car.posX * moveY));
                     }
                 }
-                //check down the axis
+                //check down the axis (DOWN or RIGHT)
                 if ((BOARD_SIZE - car.size) * moveX + (BOARD_SIZE - car.size) * moveY > position)
                 {
                     for (int i = ((car.posX + car.size - 1) * moveX + (car.posY + car.size - 1) * moveY); i < BOARD_SIZE; i++)
