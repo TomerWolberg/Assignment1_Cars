@@ -2,7 +2,7 @@
   "profiles": {
     "Assignment1_Cars": {
       "commandName": "Project",
-      "commandLineArgs": "5"
+      "commandLineArgs": "buildin 1"
     }
   }
 }

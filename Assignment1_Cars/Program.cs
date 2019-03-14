@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SuperUltraAwesomeAI
 {
@@ -219,7 +219,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic3() + h;
+                    heuristic = st.Heuristic3(2) + h*3;
                 }
                 if (p != null)
                 {
@@ -311,7 +311,7 @@ namespace SuperUltraAwesomeAI
         /// <returns>Score of current position</returns>
         int Heuristic3(int depth = 4, char carIdentifier = 'X', int position = -1)
         {
-            const int CAR_IN_A_WAY_PENALTY = 2;
+            const int CAR_IN_A_WAY_PENALTY = 1;
             if (depth == 0) return 0;
             int count = 0;
             if (!cars.Keys.Contains(carIdentifier)) return -1;
@@ -604,18 +604,32 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
-            int waitingTime = 0;
-            if ( args.Length == 0 ) waitingTime = 10;
-            else waitingTime = Int32.Parse(args[0]);
+            int       waitingTime = 0;
+            // If arguments are not provided - print usage and exit
+            if (args.Length < 1)
+            {
+                Console.WriteLine("Usage:\nAssignment1_Cars filename [T] \nfilename - required argument, a path to the file containing list of problems.\nT - allocated time (seconds) to solve every problem (default 5) \n\nExample: Assignment1_Cars input.txt 1\n\n");
+                return;
+            }
+            else
+            {
+                if (args[0] != "buildin")
+                    text = System.IO.File.ReadAllText(args[0]);
+                if (args.Length == 2)
+                    waitingTime = Int32.Parse(args[1]);
+                else
+                    waitingTime = 5;
+            }
             Stopwatch s           = new Stopwatch();
             TimeSpan  t           = TimeSpan.Zero;
             string[]  levels      = text.Split('\n');
             int       level       = 1;
             string    finalOutput = string.Empty;
-            string    docPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            //string    docPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             int       avgDepth    = 0;
 
-            using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "Lab1_Output.txt")))
+            //using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "Lab1_Output.txt")))
+            using (StreamWriter outputFile = new StreamWriter("Lab1_Output.txt"))
             {
                 foreach (var item in levels)
                 {
@@ -645,6 +659,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                 }
                 outputFile.WriteLine(String.Format("Avg search depth:{0:F3}",avgDepth / level));
                 outputFile.WriteLine("Avg Time  = " + t);
+                Console.WriteLine("The data was saved in: Lab1_Output.txt");
             }
         }
     }
