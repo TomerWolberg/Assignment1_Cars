@@ -614,9 +614,26 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             else
             {
                 if (args[0] != "buildin")
-                    text = System.IO.File.ReadAllText(args[0]);
+                    try
+                    {
+                        text = System.IO.File.ReadAllText(args[0]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("{0} is not a valid input file argument.\n", args[0]);
+                        Console.WriteLine("Usage:\nAssignment1_Cars filename [T] \nfilename - required argument, a path to the file containing list of problems.\nT - allocated time (seconds) to solve every problem (default 5) \n\nExample: Assignment1_Cars input.txt 1\n\n");
+                        return;
+                    }
                 if (args.Length == 2)
-                    waitingTime = Int32.Parse(args[1]);
+                    try
+                    {
+                        waitingTime = Int32.Parse(args[1]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("{0} is not a valid input for seconds. Using the default 5 second limit.",args[1]);
+                        waitingTime = 5;
+                    }
                 else
                     waitingTime = 5;
             }
