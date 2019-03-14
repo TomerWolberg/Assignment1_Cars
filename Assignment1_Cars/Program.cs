@@ -65,11 +65,11 @@ namespace SuperUltraAwesomeAI
             void FindSolution(DLSNode n)
             {
                 nodesCount++;
-                if (n.height == l)
+                if (n.height == l - 1)
                 {
                     if (CanReachGoal())
                     {   //Found solution
-                        sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
+                        sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), l);
                     }
                 }
                 else
@@ -85,7 +85,6 @@ namespace SuperUltraAwesomeAI
             }
             var root = new DLSNode(null, null, 0);
             FindSolution(root);
-            
             return sol == null ?
             new LabAnswer
             {
@@ -95,9 +94,9 @@ namespace SuperUltraAwesomeAI
             {
                 solutionStr          = sol.GetSolution(),
                 numberOfNodesScanned = nodesCount,
-                dnRatio              = (float)sol.height / (float)nodesCount,
-                max                  = root.MaxDepth(),
-                min                  = root.MinDepth()
+                dnRatio              = (float)l / (float)nodesCount,
+                max                  = l, // In DLS min = max = sol.height = l
+                min                  = l  // In DLS min = max = sol.height = l
             };
         }
 
@@ -169,22 +168,14 @@ namespace SuperUltraAwesomeAI
             public readonly DLSNode parent;
             public readonly string  action;
             public readonly int     height;
-            private readonly List<DLSNode> sons;
             public DLSNode( DLSNode p ,
                             string  a ,
                             int     h )
             {
-                sons   = new List<DLSNode>();
                 parent = p;
                 action = a;
                 height = h;
-                if (p != null)
-                {
-                    p.sons.Add(this);
-                }
             }
-            public int MinDepth() => sons.Count > 0 ? sons.Select(n => n.MinDepth()).Min() + 1 : 0;
-            public int MaxDepth() => sons.Count > 0 ? sons.Select(n => n.MaxDepth()).Max() + 1 : 0;
             public string GetSolution()
             {
                 DLSNode sol = this;
@@ -219,7 +210,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic4() + h;
+                    heuristic = h + st.Heuristic2();
                 }
                 if (p != null)
                 {
@@ -710,7 +701,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             {
                 foreach (var item in levels)
                 {
-                    var task = Task.Run(() => new RushHour(item).BestFS());
+                    var task = Task.Run(() => new RushHour(item).IDS());
                     s.Start();
                     bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
                     s.Stop();
@@ -721,7 +712,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
-                        outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
+                        Console.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
                         outputFile.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr.max, _tr.min));
@@ -734,7 +725,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     }
                     s.Reset();
                 }
-                outputFile.WriteLine(String.Format("Avg search depth:{0:F3}",avgDepth / level));
+                Console.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth / level));
                 outputFile.WriteLine("Avg Time  = " + t);
                 Console.WriteLine("The data was saved in: Lab1_Output.txt");
             }
