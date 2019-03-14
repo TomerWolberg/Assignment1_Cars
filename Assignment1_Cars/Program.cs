@@ -223,7 +223,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = h + st.Heuristic2();
+                    heuristic = h + st.Heuristic4();
                 }
                 if (p != null)
                 {
@@ -719,11 +719,11 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             {
                 foreach (var item in levels)
                 {
-                    var task = Task.Run(() => new RushHour(item).IDS());
+                    var task = Task.Run(() => new RushHour(item).BestFS());
                     s.Start();
                     bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
                     s.Stop();
-                    t += s.Elapsed / levels.Length;
+                    t += TimeSpan.FromMilliseconds(s.Elapsed.Milliseconds / levels.Length);
                     TimeSpan ts = s.Elapsed;
                     if (finished)
                     {
