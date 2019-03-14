@@ -721,7 +721,6 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
-                        nodesSum += _tr.numberOfNodesScanned;
                         outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
