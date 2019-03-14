@@ -37,31 +37,31 @@ namespace SuperUltraAwesomeAI
         class CarDetails
         {
             public enum Axis { X, Y };
-            public int  size;
-            public int  posX;
-            public int  posY;
+            public int size;
+            public int posX;
+            public int posY;
             public Axis axis;
         }
 
         #region Variables
 
         //           Constants:
-        public const int BOARD_SIZE      = 6;
+        public const int BOARD_SIZE = 6;
         public const int RED_CAR_Y_INDEX = 2;
 
         //            Fields:
         Dictionary<char, CarDetails> cars;
-        char[,]                      board;
+        char[,] board;
 
         #endregion
 
         #region Search algorithms
 
         //DLS uninformed search - recursive implementaion
-        public LabAnswer DLS( int l )
+        public LabAnswer DLS(int l)
         {
-            DLSNode sol        = null;
-            int     nodesCount = 0;
+            DLSNode sol = null;
+            int nodesCount = 0;
             void FindSolution(DLSNode n)
             {
                 nodesCount++;
@@ -92,11 +92,11 @@ namespace SuperUltraAwesomeAI
             } :
             new LabAnswer
             {
-                solutionStr          = sol.GetSolution(),
+                solutionStr = sol.GetSolution(),
                 numberOfNodesScanned = nodesCount,
-                dnRatio              = (float)l / (float)nodesCount,
-                max                  = l, // In DLS min = max = sol.height = l
-                min                  = l  // In DLS min = max = sol.height = l
+                dnRatio = (float)l / (float)nodesCount,
+                max = l, // In DLS min = max = sol.height = l
+                min = l  // In DLS min = max = sol.height = l
             };
         }
 
@@ -107,7 +107,7 @@ namespace SuperUltraAwesomeAI
             int i = 1, nodesCount = 0;
             do
             {
-                ans         = DLS(i++);
+                ans = DLS(i++);
                 nodesCount += ans.numberOfNodesScanned;
             } while (ans.solutionStr == null);
             ans.numberOfNodesScanned = nodesCount;
@@ -120,9 +120,9 @@ namespace SuperUltraAwesomeAI
         public LabAnswer BestFS()
         {
             Node root = new Node(null, this, null, 0);
-            var  heap = new NodesMinHeap(root);
-            var  set  = new HashSet<string>() { GetHash() };
-            Node ans  = null;
+            var heap = new NodesMinHeap(root);
+            var set = new HashSet<string>() { GetHash() };
+            Node ans = null;
             int totalNumberOfScannedNodes = 1;
 
             while (ans == null)
@@ -150,11 +150,11 @@ namespace SuperUltraAwesomeAI
 
             return new LabAnswer
             {
-                solutionStr          = ans.GetSolution(),
+                solutionStr = ans.GetSolution(),
                 numberOfNodesScanned = totalNumberOfScannedNodes,
-                dnRatio              = (float)ans.height / (float)totalNumberOfScannedNodes,
-                max                  = root.MaxDepth(),
-                min                  = root.MinDepth()
+                dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes,
+                max = root.MaxDepth(),
+                min = root.MinDepth()
             };
         }
 
@@ -166,13 +166,13 @@ namespace SuperUltraAwesomeAI
         class DLSNode
         {
             public readonly DLSNode parent;
-            public readonly string  action;
-            public readonly int     height;
+            public readonly string action;
+            public readonly int height;
 
             //Set the class feilds
-            public DLSNode( DLSNode p ,
-                            string  a ,
-                            int     h )
+            public DLSNode(DLSNode p,
+                            string a,
+                            int h)
             {
                 parent = p;
                 action = a;
@@ -186,7 +186,7 @@ namespace SuperUltraAwesomeAI
             public string GetSolution()
             {
                 DLSNode sol = this;
-                string  ans = string.Empty;
+                string ans = string.Empty;
                 while (sol.parent != null)
                 {
                     ans = sol.action + " " + ans;
@@ -195,34 +195,34 @@ namespace SuperUltraAwesomeAI
                 return ans;
             }
         }
-		
+
         //Node used in the BestFS function
         class Node
         {
-            public readonly Node       parent;
-            public readonly string     action;
-            public readonly RushHour   state;
-            public readonly int        heuristic;
-            public readonly int        height;
+            public readonly Node parent;
+            public readonly string action;
+            public readonly RushHour state;
+            public readonly int heuristic;
+            public readonly int height;
             public readonly List<Node> sons;
-            
+
             /// <summary>
             ///Sets the class feilds.
             ///If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
             ///If the parent isn't null it adds this node to it's sons.
             /// </summary>
-            public Node( Node     p  ,
-                         RushHour st ,
-                         string   a  ,
-                         int      h  )
+            public Node(Node p,
+                         RushHour st,
+                         string a,
+                         int h)
             {
-                sons   = new List<Node>();
+                sons = new List<Node>();
                 action = a;
                 parent = p;
                 height = h;
                 if (st != null)
                 {
-                    state     = st.Clone();
+                    state = st.Clone();
                     heuristic = h + st.Heuristic4();
                 }
                 if (p != null)
@@ -239,7 +239,7 @@ namespace SuperUltraAwesomeAI
             /// <returns>returns the solution of the level</returns>
             public string GetSolution()
             {
-                Node   sol = this;
+                Node sol = this;
                 string ans = string.Empty;
                 while (sol.parent != null)
                 {
@@ -253,27 +253,27 @@ namespace SuperUltraAwesomeAI
         #endregion
 
         #region Constructors
-        
+
         //Private empty C'tor
         private RushHour() { }
 
         //Public C'tor, save all the car names, positions and moving axes.
-		//It also transfers the level's string to a 2D-array.
-        public RushHour( string level )
+        //It also transfers the level's string to a 2D-array.
+        public RushHour(string level)
         {
             board = new char[BOARD_SIZE, BOARD_SIZE];
-            cars  = new Dictionary<char, CarDetails>(BOARD_SIZE * BOARD_SIZE / 2);
+            cars = new Dictionary<char, CarDetails>(BOARD_SIZE * BOARD_SIZE / 2);
             for (int i = 0; i < BOARD_SIZE; i++)
             {
                 for (int j = 0; j < BOARD_SIZE; j++)
                 {
                     char item = level[i * BOARD_SIZE + j];
-                    if(item != '.')
+                    if (item != '.')
                     {
-                        if(cars.ContainsKey(item))
+                        if (cars.ContainsKey(item))
                         {
-                            var car  = cars[item];
-                            car.axis = car.posX == j ? CarDetails.Axis.Y:
+                            var car = cars[item];
+                            car.axis = car.posX == j ? CarDetails.Axis.Y :
                                                        CarDetails.Axis.X;
                             ++car.size;
                         }
@@ -294,11 +294,11 @@ namespace SuperUltraAwesomeAI
         #endregion
 
         #region Heuristics
-        
+
         //Number of cars blocking the red car
         int Heuristic1()
         {
-            int count  = 0;
+            int count = 0;
             var redCar = cars['X'];
             for (int i = redCar.posX + redCar.size; i < BOARD_SIZE; i++)
             {
@@ -450,7 +450,7 @@ namespace SuperUltraAwesomeAI
             }
             return new RushHour
             {
-                cars  = dict,
+                cars = dict,
                 board = (char[,])board.Clone()
             };
         }
@@ -474,30 +474,30 @@ namespace SuperUltraAwesomeAI
 
         ///<summary>Moves a car according to a given action.</summary>
         ///<example>AU2 moves car A up by 2 cells </example>
-        void Move( string action )
+        void Move(string action)
         {
             if (action != null)
             {
-                var car    = cars[action[0]];
+                var car = cars[action[0]];
                 int length = action[2] & 15;
                 for (int i = 0; i < length; i++)
                 {
                     switch (action[1])
                     {
                         case 'U': //Move up
-                            board[--car.posY         , car.posX]     = action[0];
-                            board[car.posY + car.size, car.posX]     = '.';
+                            board[--car.posY, car.posX] = action[0];
+                            board[car.posY + car.size, car.posX] = '.';
                             break;
                         case 'D': //Move down
-                            board[car.posY               , car.posX] = '.';
+                            board[car.posY, car.posX] = '.';
                             board[(car.posY++) + car.size, car.posX] = action[0];
                             break;
                         case 'L': //Move left
-                            board[car.posY, --car.posX]              = action[0];
-                            board[car.posY, car.posX + car.size]     = '.';
+                            board[car.posY, --car.posX] = action[0];
+                            board[car.posY, car.posX + car.size] = '.';
                             break;
                         case 'R': //Move right
-                            board[car.posY, car.posX]                = '.';
+                            board[car.posY, car.posX] = '.';
                             board[car.posY, (car.posX++) + car.size] = action[0];
                             break;
                     }
@@ -511,14 +511,14 @@ namespace SuperUltraAwesomeAI
         /// <example>
         /// AL4 -> AR4, BU1 -> BD1
         /// </example>
-        string OppositeMove( string action )
+        string OppositeMove(string action)
         {
-            if(action != null)
+            if (action != null)
             {   //Replace action's direction
                 string d = action[1] == 'R' ? "L" :
                            action[1] == 'L' ? "R" :
                            action[1] == 'U' ? "D" :
-                                              "U" ;
+                                              "U";
                 action = action[0] + d + action[2];
             }
             return action;
@@ -531,8 +531,8 @@ namespace SuperUltraAwesomeAI
             foreach (var p in cars)
             {
                 var car = p.Value;
-                int x1  = car.posX, x2 = car.posX + car.size - 1;
-                int y1  = car.posY, y2 = car.posY + car.size - 1;
+                int x1 = car.posX, x2 = car.posX + car.size - 1;
+                int y1 = car.posY, y2 = car.posY + car.size - 1;
                 bool l, r, u, d;
                 l = r = car.axis == CarDetails.Axis.X;
                 u = d = car.axis == CarDetails.Axis.Y;
@@ -565,28 +565,28 @@ namespace SuperUltraAwesomeAI
         {
             //Heap data
             public readonly List<Node> nodes;
-            
+
             //Number of items in the heap
             public int Count => nodes.Count;
 
             //Constructor
-            public NodesMinHeap( Node first )
+            public NodesMinHeap(Node first)
             {
                 nodes = new List<Node>();
                 Insert(first);
             }
 
             //Adds the new node to the heap
-            public void Insert( Node node )
+            public void Insert(Node node)
             {
                 nodes.Add(node);
                 int i = nodes.Count - 1, j;
                 while (i > 0 && nodes[j = (i - 1) / 2].heuristic > nodes[i].heuristic)
                 {   //while *parent(i) > *i:
                     Node temp = nodes[j]; //*i <=> *parent(i)
-                    nodes[j]  = nodes[i]; //...
-                    nodes[i]  = temp;     //...
-                    i         = j;        //i = parent(i)
+                    nodes[j] = nodes[i]; //...
+                    nodes[i] = temp;     //...
+                    i = j;        //i = parent(i)
                 }
             }
 
@@ -594,19 +594,19 @@ namespace SuperUltraAwesomeAI
             public Node Remove()
             {
                 //Remove min value
-                var top   = nodes[0];
+                var top = nodes[0];
                 int count = nodes.Count - 1;
-                nodes[0]  = nodes[count];
+                nodes[0] = nodes[count];
                 nodes.RemoveAt(count);
 
                 //Fix heap property if it's violated
                 int index = 0;
                 bool flag = nodes.Count > 0;
-                while(flag)
+                while (flag)
                 {
                     int smallest = index;
-                    int l        = index + index + 1;
-                    int r        = l + 1;
+                    int l = index + index + 1;
+                    int r = l + 1;
                     if ((l < count) && (nodes[l].heuristic < nodes[index].heuristic))
                     {
                         smallest = l;
@@ -615,20 +615,20 @@ namespace SuperUltraAwesomeAI
                     {
                         smallest = r;
                     }
-                    var temp        = nodes[smallest];
+                    var temp = nodes[smallest];
                     nodes[smallest] = nodes[index];
-                    nodes[index]    = temp;
-                    flag            = index != smallest;
-                    index           = smallest;
+                    nodes[index] = temp;
+                    flag = index != smallest;
+                    index = smallest;
                 }
 
                 return top;
             }
-        }		
+        }
     }
 
     public class Program
-    {        
+    {
         public static void Main(string[] args)
         {
             string text = @"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
@@ -672,7 +672,7 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
-            int       waitingTime = 0;
+            int waitingTime = 0;
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
@@ -700,7 +700,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     }
                     catch
                     {
-                        Console.WriteLine("{0} is not a valid input for seconds. Using the default 1 second limit.",args[1]);
+                        Console.WriteLine("{0} is not a valid input for seconds. Using the default 1 second limit.", args[1]);
                         waitingTime = 1;
                     }
                 else
@@ -708,13 +708,13 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             }
             #endregion
 
-            Stopwatch s           = new Stopwatch();
-            TimeSpan  t           = TimeSpan.Zero;
-            string[]  levels      = text.Split('\n');
-            int       level       = 1;
-            string    finalOutput = string.Empty;
-            int       avgDepth    = 0;
-            
+            Stopwatch s = new Stopwatch();
+            TimeSpan t = TimeSpan.Zero;
+            string[] levels = text.Split('\n');
+            int level = 1;
+            string finalOutput = string.Empty;
+            int avgDepth = 0;
+
             using (StreamWriter outputFile = new StreamWriter("Lab1_Output.txt"))
             {
                 foreach (var item in levels)
@@ -730,6 +730,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
+                        Console.WriteLine("Level " + level + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
@@ -738,8 +739,9 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     }
                     else
                     {
+                        Console.WriteLine("Level " + level + "Failed");
                         outputFile.WriteLine("Level " + level++ + "Failed");
-                        outputFile.WriteLine("Timeout reached at {0:00}.{1:000}",ts.Seconds,ts.Milliseconds);
+                        outputFile.WriteLine("Timeout reached at {0:00}.{1:000}", ts.Seconds, ts.Milliseconds);
                     }
                     s.Reset();
                 }
