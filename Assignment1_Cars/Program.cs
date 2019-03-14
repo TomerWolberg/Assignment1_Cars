@@ -168,6 +168,8 @@ namespace SuperUltraAwesomeAI
             public readonly DLSNode parent;
             public readonly string  action;
             public readonly int     height;
+
+            //Set the class feilds
             public DLSNode( DLSNode p ,
                             string  a ,
                             int     h )
@@ -176,6 +178,11 @@ namespace SuperUltraAwesomeAI
                 action = a;
                 height = h;
             }
+
+            /// <summary>
+            /// If this Node instance is the solution Node it will use the parent pointer to get a solution string
+            /// </summary>
+            /// <returns>returns the solution of the level</returns>
             public string GetSolution()
             {
                 DLSNode sol = this;
@@ -198,6 +205,12 @@ namespace SuperUltraAwesomeAI
             public readonly int        heuristic;
             public readonly int        height;
             public readonly List<Node> sons;
+            
+            /// <summary>
+            ///Sets the class feilds.
+            ///If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
+            ///If the parent isn't null it adds this node to it's sons.
+            /// </summary>
             public Node( Node     p  ,
                          RushHour st ,
                          string   a  ,
@@ -219,6 +232,11 @@ namespace SuperUltraAwesomeAI
             }
             public int MinDepth() => sons.Count > 0 ? sons.Select(n => n.MinDepth()).Min() + 1 : 0;
             public int MaxDepth() => sons.Count > 0 ? sons.Select(n => n.MaxDepth()).Max() + 1 : 0;
+
+            /// <summary>
+            /// If this Node instance is the solution Node it will use the parent pointer to get a solution string
+            /// </summary>
+            /// <returns>returns the solution of the level</returns>
             public string GetSolution()
             {
                 Node   sol = this;
