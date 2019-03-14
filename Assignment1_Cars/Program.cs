@@ -677,7 +677,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
             {
-                Console.WriteLine("Usage:\nAssignment1_Cars filename [T] \nfilename - required argument, a path to the file containing list of problems.\nT - allocated time (seconds) to solve every problem (default 5) \n\nExample: Assignment1_Cars input.txt 1\n\n");
+                Console.WriteLine("Usage:\nAssignment1_Cars filename [T] \nfilename - required argument, a path to the file containing list of problems.\nT - allocated time (seconds) to solve every problem (default 1) \n\nExample: Assignment1_Cars input.txt 1\n\n");
                 return;
             }
             else
@@ -690,7 +690,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     catch
                     {
                         Console.WriteLine("{0} is not a valid input file argument.\n", args[0]);
-                        Console.WriteLine("Usage:\nAssignment1_Cars filename [T] \nfilename - required argument, a path to the file containing list of problems.\nT - allocated time (seconds) to solve every problem (default 5) \n\nExample: Assignment1_Cars input.txt 1\n\n");
+                        Console.WriteLine("Usage:\nAssignment1_Cars filename [T] \nfilename - required argument, a path to the file containing list of problems.\nT - allocated time (seconds) to solve every problem (default 1) \n\nExample: Assignment1_Cars input.txt 1\n\n");
                         return;
                     }
                 if (args.Length == 2)
@@ -700,11 +700,11 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     }
                     catch
                     {
-                        Console.WriteLine("{0} is not a valid input for seconds. Using the default 5 second limit.",args[1]);
-                        waitingTime = 5;
+                        Console.WriteLine("{0} is not a valid input for seconds. Using the default 1 second limit.",args[1]);
+                        waitingTime = 1;
                     }
                 else
-                    waitingTime = 5;
+                    waitingTime = 1;
             }
             #endregion
 
@@ -730,7 +730,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
-                        Console.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
+                        outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
                         outputFile.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr.max, _tr.min));
@@ -743,7 +743,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     }
                     s.Reset();
                 }
-                Console.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth / level));
+                outputFile.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth / level));
                 outputFile.WriteLine("Avg Time  = " + t);
                 Console.WriteLine("The data was saved in: Lab1_Output.txt");
             }
