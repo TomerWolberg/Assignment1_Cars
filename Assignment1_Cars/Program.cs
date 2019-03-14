@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.Math;
 
 namespace SuperUltraAwesomeAI
 {
@@ -219,7 +220,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state     = st.Clone();
-                    heuristic = st.Heuristic3(2) + h*3;
+                    heuristic = st.Heuristic4() + h;
                 }
                 if (p != null)
                 {
@@ -356,6 +357,65 @@ namespace SuperUltraAwesomeAI
                 }
             }
             return count;
+        }
+
+        /// <returns>Lower bound on the number of cars needed to move</returns>
+        int Heuristic4()
+        {
+            var carsSet = new HashSet<char>();
+            int CountCars(char carName)
+            {
+                int count = 0;
+                if (carName != '.' && carsSet.Add(carName))
+                {
+                    var car = cars[carName];
+                    count++;
+                    if (carName == 'X')
+                    {
+                        for (int i = car.posX + car.size; i < BOARD_SIZE; i++)
+                        {
+                            count += CountCars(board[RED_CAR_Y_INDEX, i]);
+                        }
+                    }
+                    else
+                    {
+                        if (car.axis == CarDetails.Axis.X)
+                        {
+                            int left = car.posX - 1, right = car.posX + car.size;
+                            if (left < 0)
+                            {
+                                count += CountCars(board[car.posY, right]);
+                            }
+                            else if (right == BOARD_SIZE)
+                            {
+                                count += CountCars(board[car.posY, left]);
+                            }
+                            else if (board[car.posY, left] != '.' && board[car.posY, right] != '.')
+                            {
+                                count += Max(1, Min(CountCars(board[car.posY, right]), CountCars(board[car.posY, left])));
+                            }
+                        }
+                        else
+                        {
+                            int up = car.posY - 1, down = car.posY + car.size;
+                            if (up < 0)
+                            {
+                                CountCars(board[down, car.posX]);
+                            }
+                            else if (down == BOARD_SIZE)
+                            {
+                                CountCars(board[up, car.posX]);
+                            }
+                            else if (board[up, car.posX] != '.' && board[down, car.posX] != '.')
+                            {
+                                count += Max(1, Min(CountCars(board[up, car.posX]), CountCars(board[up, car.posX])));
+                            }
+                        }
+                    }
+                }
+                return count;
+            }
+            return CountCars('X');
         }
 
         #endregion
@@ -661,6 +721,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length - 1;
                         avgDepth += _tr.max;
+                        nodesSum += _tr.numberOfNodesScanned;
                         outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Solution: " + _tr.solutionStr);
                         outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
