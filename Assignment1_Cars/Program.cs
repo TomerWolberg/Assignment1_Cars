@@ -61,26 +61,25 @@ namespace SuperUltraAwesomeAI
         public LabAnswer DLS( int l )
         {
             DLSNode sol        = null;
-            var     set        = new HashSet<string>();
             int     nodesCount = 0;
             void FindSolution(DLSNode n)
             {
-                if (set.Add(GetHash()))
-                {   //If the state is new
-                    nodesCount++;
+                nodesCount++;
+                if (n.height == l)
+                {
                     if (CanReachGoal())
                     {   //Found solution
                         sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
                     }
-                    else if (n.height < (l - 1) && sol == null)
-                    {   //Add possible moves to the stack
-                        var moves = PossibleMoves();
-                        for (int i = 0; i < moves.Length && sol == null; i++)
-                        {
-                            Move(moves[i]);
-                            FindSolution(new DLSNode(n, moves[i], n.height + 1));
-                            Move(OppositeMove(moves[i]));
-                        }
+                }
+                else
+                {   //Add possible moves to the stack
+                    var moves = PossibleMoves();
+                    for (int i = 0; i < moves.Length && sol == null; i++)
+                    {
+                        Move(moves[i]);
+                        FindSolution(new DLSNode(n, moves[i], n.height + 1));
+                        Move(OppositeMove(moves[i]));
                     }
                 }
             }
