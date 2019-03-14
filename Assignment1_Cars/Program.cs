@@ -605,6 +605,7 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
             int       waitingTime = 0;
+            #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
             {
@@ -637,15 +638,15 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                 else
                     waitingTime = 5;
             }
+            #endregion
+
             Stopwatch s           = new Stopwatch();
             TimeSpan  t           = TimeSpan.Zero;
             string[]  levels      = text.Split('\n');
             int       level       = 1;
             string    finalOutput = string.Empty;
-            //string    docPath     = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             int       avgDepth    = 0;
-
-            //using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "Lab1_Output.txt")))
+            
             using (StreamWriter outputFile = new StreamWriter("Lab1_Output.txt"))
             {
                 foreach (var item in levels)
