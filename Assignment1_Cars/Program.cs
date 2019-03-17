@@ -202,7 +202,7 @@ namespace SuperUltraAwesomeAI
             public readonly Node parent;
             public readonly string action;
             public readonly RushHour state;
-            public readonly int heuristic;
+            public readonly int nodeScore;
             public readonly int height;
             public readonly List<Node> sons;
 
@@ -211,10 +211,10 @@ namespace SuperUltraAwesomeAI
             ///If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
             ///If the parent isn't null it adds this node to it's sons.
             /// </summary>
-            public Node(Node p,
-                         RushHour st,
-                         string a,
-                         int h)
+            public Node(Node     p  ,
+                        RushHour st ,
+                        string   a  ,
+                        int      h  )
             {
                 sons = new List<Node>();
                 action = a;
@@ -223,7 +223,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state = st.Clone();
-                    heuristic = h + st.Heuristic4();
+                    nodeScore = h + st.CalculateScore();
                 }
                 if (p != null)
                 {
@@ -257,8 +257,11 @@ namespace SuperUltraAwesomeAI
         //Private empty C'tor
         private RushHour() { }
 
-        //Public C'tor, save all the car names, positions and moving axes.
-        //It also transfers the level's string to a 2D-array.
+        /// <summary>
+        /// Public C'tor, save all the car names, positions and moving axes.
+        /// It also transfers the level's string to a 2D-array.
+        /// </summary>
+        /// <param name="level"> The level encoded as a 36 length string </param>
         public RushHour(string level)
         {
             board = new char[BOARD_SIZE, BOARD_SIZE];
@@ -294,6 +297,15 @@ namespace SuperUltraAwesomeAI
         #endregion
 
         #region Heuristics
+
+        /// <summary>
+        /// This method is for setting the preferred heuristic for Rush Hour agent
+        /// </summary>
+        /// <returns></returns>
+        int CalculateScore()
+        {
+            return Heuristic4();
+        }
 
         //Number of cars blocking the red car
         int Heuristic1()
@@ -581,7 +593,7 @@ namespace SuperUltraAwesomeAI
             {
                 nodes.Add(node);
                 int i = nodes.Count - 1, j;
-                while (i > 0 && nodes[j = (i - 1) / 2].heuristic > nodes[i].heuristic)
+                while (i > 0 && nodes[j = (i - 1) / 2].nodeScore > nodes[i].nodeScore)
                 {   //while *parent(i) > *i:
                     Node temp = nodes[j]; //*i <=> *parent(i)
                     nodes[j] = nodes[i]; //...
@@ -607,11 +619,11 @@ namespace SuperUltraAwesomeAI
                     int smallest = index;
                     int l = index + index + 1;
                     int r = l + 1;
-                    if ((l < count) && (nodes[l].heuristic < nodes[index].heuristic))
+                    if ((l < count) && (nodes[l].nodeScore < nodes[index].nodeScore))
                     {
                         smallest = l;
                     }
-                    if ((r < count) && (nodes[r].heuristic < nodes[smallest].heuristic))
+                    if ((r < count) && (nodes[r].nodeScore < nodes[smallest].nodeScore))
                     {
                         smallest = r;
                     }
