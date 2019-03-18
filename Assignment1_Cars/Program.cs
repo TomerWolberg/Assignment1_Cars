@@ -304,7 +304,7 @@ namespace SuperUltraAwesomeAI
         /// <returns></returns>
         int CalculateScore()
         {
-            return Heuristic4();
+            return Heuristic5();
         }
 
         //Number of cars blocking the red car
@@ -436,6 +436,39 @@ namespace SuperUltraAwesomeAI
                 return count;
             }
             return CountCars('X');
+        }
+
+        /// <summary>
+        /// Implementation of heuristics 
+        /// </summary>
+        /// <returns></returns>
+        int Heuristic5()
+        {
+            int _r = 0; //Result
+            CarDetails _c = cars['X']; // Red car
+            // Check every position from the car to exit
+            for (int _p = _c.posY + _c.size; _p < BOARD_SIZE; _p++)
+            {
+                // Check for Blocking Car
+                char _bc = board[_c.posX, _p];
+                if (_bc != '.')
+                {
+                    // Count blocking car
+                    _r++;
+                    // Count tiles to move the blocking car
+                    var car = cars[_bc];
+                    int up = car.posY - 1, down = car.posY + car.size;
+                    int _d1 = 8, _d2 = 8;
+                    // check if we can move the car up
+                    if (car.size - 1 < _c.posX)
+                        _d1 = (down - 1) - _c.posX + 1; // count minimum tiles to move up
+                    // check if we can move the car down
+                    else if (BOARD_SIZE - car.size > _c.posX)
+                        _d2 = _c.posX - car.posY + 1;    // count minimum tiles to move up
+                    _r += Min(_d1, _d2);
+                }
+            }
+            return _r;
         }
 
         #endregion
