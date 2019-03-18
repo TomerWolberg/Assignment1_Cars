@@ -301,7 +301,7 @@ namespace SuperUltraAwesomeAI
         /// <summary>
         /// This method is for setting the preferred heuristic for Rush Hour agent
         /// </summary>
-        /// <returns></returns>
+        /// <returns> Perceived value of current state </returns>
         int CalculateScore()
         {
             return Heuristic5();
@@ -439,9 +439,8 @@ namespace SuperUltraAwesomeAI
         }
 
         /// <summary>
-        /// Implementation of heuristics 
+        /// Implementation of first heuristic from assignment
         /// </summary>
-        /// <returns></returns>
         int Heuristic5()
         {
             int _r = 0; //Result
@@ -468,6 +467,13 @@ namespace SuperUltraAwesomeAI
                     _r += Min(_d1, _d2);
                 }
             }
+            return _r;
+        }
+
+        int Heuristics6()
+        {
+            int _r = 0;
+
             return _r;
         }
 
