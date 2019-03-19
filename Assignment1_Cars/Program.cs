@@ -38,7 +38,13 @@ namespace SuperUltraAwesomeAI
         {
             public enum Axis { X, Y };
             public int size;
+            /// <summary>
+            /// Left / Right
+            /// </summary>
             public int posX;
+            /// <summary>
+            /// Up / Down
+            /// </summary>
             public int posY;
             public Axis axis;
         }
@@ -304,7 +310,7 @@ namespace SuperUltraAwesomeAI
         /// <returns> Perceived value of current state </returns>
         int CalculateScore()
         {
-            return Heuristic5();
+            return Heuristic6();
         }
 
         //Number of cars blocking the red car
@@ -330,7 +336,7 @@ namespace SuperUltraAwesomeAI
         /// <param name="position">Position we want to clear for movement</param>
         /// <param name="depth">Depth left</param>
         /// <returns>Score of current position</returns>
-        int Heuristic3(int depth = 4, char carIdentifier = 'X', int position = -1)
+        int Heuristic3(int depth = 2, char carIdentifier = 'X', int position = -1)
         {
             const int CAR_IN_A_WAY_PENALTY = 1;
             if (depth == 0) return 0;
@@ -446,10 +452,10 @@ namespace SuperUltraAwesomeAI
             int _r = 0; //Result
             CarDetails _c = cars['X']; // Red car
             // Check every position from the car to exit
-            for (int _p = _c.posY + _c.size; _p < BOARD_SIZE; _p++)
+            for (int _p = _c.posX + _c.size; _p < BOARD_SIZE; _p++)
             {
                 // Check for Blocking Car
-                char _bc = board[_c.posX, _p];
+                char _bc = board[_c.posY, _p];
                 if (_bc != '.')
                 {
                     // Count blocking car
@@ -459,21 +465,60 @@ namespace SuperUltraAwesomeAI
                     int up = car.posY - 1, down = car.posY + car.size;
                     int _d1 = 8, _d2 = 8;
                     // check if we can move the car up
-                    if (car.size - 1 < _c.posX)
-                        _d1 = (down - 1) - _c.posX + 1; // count minimum tiles to move up
+                    if (car.size - 1 < _c.posY)
+                        _d1 = (down - 1) - _c.posY + 1; // count minimum tiles to move up
                     // check if we can move the car down
-                    else if (BOARD_SIZE - car.size > _c.posX)
-                        _d2 = _c.posX - car.posY + 1;    // count minimum tiles to move up
+                    else if (BOARD_SIZE - car.size > _c.posY)
+                        _d2 = _c.posY - car.posY + 1;    // count minimum tiles to move up
                     _r += Min(_d1, _d2);
                 }
             }
             return _r;
         }
 
-        int Heuristics6()
+        // This is a dirty solution, not to be 
+        // implemented in any respectable workplace
+        int Heuristic6()
         {
-            int _r = 0;
-
+            int _r = 0; //Result
+            char _bc;
+            CarDetails _c = cars['X']; // Red car
+            // Check every position from the red car to exit
+            for (int _p = _c.posX + _c.size; _p < BOARD_SIZE; _p++)
+            {
+                // Check for Blocking Car
+                _bc = board[_c.posY, _p];
+                if (_bc != '.')
+                {
+                    // Count blocking car
+                    _r++;
+                    // Count the minimum required tiles to move the blocking car
+                    var car = cars[_bc];
+                    int up = car.posY - 1, down = car.posY + car.size;
+                    int _d1 = 8, _d2 = 8;
+                    // check if we can move the car up
+                    if (car.size - 1 < _c.posY)
+                    {
+                        int cost = 0;
+                        _d1 = down - _c.posY; // count minimum tiles to move up
+                        // Count blocking cars on the way
+                        for (int x = up; x < up - _d1; x--)
+                            if (board[x, car.posX] != '.') cost++;
+                        _d1 += cost; // add the cost
+                    }
+                    // check if we can move the car down
+                    else if (BOARD_SIZE - car.size > _c.posY)
+                    {
+                        int cost = 0;
+                        _d2 = _c.posY - car.posY + 1;    // count minimum tiles to move down
+                        // Count blocking cars on the way
+                        for (int x = down; x < down + _d2; x++)
+                            if (board[x, car.posX] != '.') cost++;
+                        _d2 += cost;
+                    }
+                    _r += Min(_d1, _d2);
+                }
+            }
             return _r;
         }
 
