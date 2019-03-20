@@ -524,6 +524,15 @@ namespace SuperUltraAwesomeAI
 
         #endregion
 
+        //Returns how much freedom you have.
+        //For exaple if you have a lot of oil
+        //then you don't have enough freedom
+        //and you need to get some freedom!!!
+        public int MuricaFuckYeah() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ? (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
+                                                                                                (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
+                                                                                                (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
+                                                                                                (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
+
         ///<summary>
         ///Create a deep copy of the RushHour class
         ///</summary>
