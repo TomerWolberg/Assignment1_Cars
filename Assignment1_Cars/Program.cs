@@ -524,7 +524,7 @@ namespace SuperUltraAwesomeAI
 
         #endregion
 
-        //Returns how much freedom you have.
+        //Returns your level of freedom.
         //For exaple if you have a lot of oil
         //then you don't have enough freedom
         //and you need to get some freedom!!!
