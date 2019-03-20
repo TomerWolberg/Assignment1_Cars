@@ -526,7 +526,7 @@ namespace SuperUltraAwesomeAI
 
         //Returns your level of freedom.
         //For exaple if you have a lot of oil
-        //then you don't have enough freedom
+        //then you don't have a lot of freedom
         //and you need to get some freedom!!!
         public int MuricaFuckYeah() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ? (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
                                                                                                 (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
