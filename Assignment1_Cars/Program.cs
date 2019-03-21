@@ -155,14 +155,15 @@ namespace SuperUltraAwesomeAI
             }
 
 
-            // TODO Add 
-            HashSet<Node> answers = new HashSet<Node>();
+            //Create stack of 
+            Stack<RushHour> answers = new Stack<RushHour>();
             Node _n = ans;
             while (_n.parent != null)
             {
-
+                answers.Push(_n.state);
+                _n = _n.parent;
             }
-
+            
 
 
             return new LabAnswer
