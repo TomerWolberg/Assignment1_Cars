@@ -154,6 +154,17 @@ namespace SuperUltraAwesomeAI
                 }
             }
 
+
+            // TODO Add 
+            HashSet<Node> answers = new HashSet<Node>();
+            Node _n = ans;
+            while (_n.parent != null)
+            {
+
+            }
+
+
+
             return new LabAnswer
             {
                 solutionStr = ans.GetSolution(),
@@ -211,6 +222,7 @@ namespace SuperUltraAwesomeAI
             public readonly int nodeScore;
             public readonly int height;
             public readonly List<Node> sons;
+            public int degreeOfFreedom;
 
             /// <summary>
             ///Sets the class feilds.
