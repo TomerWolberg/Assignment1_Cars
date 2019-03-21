@@ -120,6 +120,68 @@ namespace SuperUltraAwesomeAI
             return ans;
         }
 
+        public LabAnswer DFSC(int f)
+        {
+            DLSNode sol = null;
+            int nodesCount = 0;
+            int max = int.MinValue, min = int.MaxValue;
+            void FindSolution(DLSNode n)
+            {
+                nodesCount++;
+                max = Max(n.height, max);
+                if (CanReachGoal())
+                {   //Found solution
+                    sol = new DLSNode(n, "XR" + (BOARD_SIZE - cars['X'].posX), n.height + 1);
+                    max = Max(n.height + 1, max);
+                }
+                else
+                {
+                    if (n.height + CalculateScore() < f)
+                    {   //Add possible moves to the stack
+                        var moves = PossibleMoves();
+                        for (int i = 0; i < moves.Length && sol == null; i++)
+                        {
+                            Move(moves[i]);
+                            FindSolution(new DLSNode(n, moves[i], n.height + 1));
+                            Move(OppositeMove(moves[i]));
+                        }
+                    }
+                    else
+                    {
+                        min = Min(min, n.height);
+                    }
+                }
+            }
+            var root = new DLSNode(null, null, 0);
+            FindSolution(root);
+            return sol == null ?
+            new LabAnswer
+            {
+                numberOfNodesScanned = nodesCount
+            } :
+            new LabAnswer
+            {
+                solutionStr = sol.GetSolution(),
+                numberOfNodesScanned = nodesCount,
+                dnRatio = (float)sol.height / (float)nodesCount,
+                max = max,
+                min = min
+            };
+        }
+
+        public LabAnswer IDAStar()
+        {
+            LabAnswer ans;
+            int i = 1, nodesCount = 0;
+            do
+            {
+                ans = DFSC(i++);
+                nodesCount += ans.numberOfNodesScanned;
+            } while (ans.solutionStr == null);
+            ans.numberOfNodesScanned = nodesCount;
+            return ans;
+        }
+
         ///<summary>
         ///Best-first search informed search
         ///</summary>
@@ -163,7 +225,6 @@ namespace SuperUltraAwesomeAI
                 min = root.MinDepth()
             };
         }
-
         #endregion
 
         #region Nodes
@@ -523,15 +584,13 @@ namespace SuperUltraAwesomeAI
         }
 
         #endregion
-
-        //Returns your level of freedom.
-        //For exaple if you have a lot of oil
-        //then you don't have a lot of freedom
-        //and you need to get some freedom!!!
-        public int MuricaFuckYeah() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ? (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
-                                                                                                (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
-                                                                                                (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
-                                                                                                (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
+        
+        /// <returns>Number of cars that can move</returns>
+        public int FreedomLevel() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ?
+                                                      (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
+                                                      (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
+                                                      (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
+                                                      (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
 
         ///<summary>
         ///Create a deep copy of the RushHour class
@@ -555,7 +614,7 @@ namespace SuperUltraAwesomeAI
             }
             return new RushHour
             {
-                cars = dict,
+                cars  = dict,
                 board = (char[,])board.Clone()
             };
         }
@@ -564,18 +623,7 @@ namespace SuperUltraAwesomeAI
         bool CanReachGoal() => Heuristic1() == 0;
 
         ///<summary>Returns string that represent the board state</summary>
-        public string GetHash()
-        {
-            string s = string.Empty;
-            for (int i = 0; i < BOARD_SIZE; i++)
-            {
-                for (int j = 0; j < BOARD_SIZE; j++)
-                {
-                    s += board[i, j];
-                }
-            }
-            return s;
-        }
+        public string GetHash() => new string(board.Cast<char>().ToArray());
 
         ///<summary>Moves a car according to a given action.</summary>
         ///<example>AU2 moves car A up by 2 cells </example>
@@ -675,11 +723,7 @@ namespace SuperUltraAwesomeAI
             public int Count => nodes.Count;
 
             //Constructor
-            public NodesMinHeap(Node first)
-            {
-                nodes = new List<Node>();
-                Insert(first);
-            }
+            public NodesMinHeap(Node first) => nodes = new List<Node> { first };
 
             //Adds the new node to the heap
             public void Insert(Node node)
