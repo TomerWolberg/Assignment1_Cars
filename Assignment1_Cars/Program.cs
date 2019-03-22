@@ -244,32 +244,35 @@ namespace SuperUltraAwesomeAI
             int ForwardScore(RushHour st, int h)  => h + st.Distance(goal_state);
             int BackwardScore(RushHour st, int h) => h + Distance(st);
           
-            Node forward_ans   = null;
-            bool solutionFound = false;
-            Node forward_root  = new Node(null, this, null, 0, ForwardScore);
-            var forward_dict   = new Dictionary<string, Node> { { GetHash(), forward_root } };
-            var forward_heap   = new NodesMinHeap(forward_root);
-            int totalNumberOfScannedNodes = 2;
+            Node forward_ans    = null;
+            Node backward_ans   = null;
+            bool solutionFound  = false;
+            Node forward_root   = new Node(null, this, null, 0, ForwardScore);
+            Node backward_root  = new Node(null, goal_state, null, 0, BackwardScore);
+            var  forward_dict   = new Dictionary<string, Node> { { GetHash(), forward_root } };
+            var  backward_dict  = new Dictionary<string, Node> { { goal_state.GetHash(), backward_root } };
+            var  forward_heap   = new NodesMinHeap(forward_root);
+            var  backward_heap  = new NodesMinHeap(backward_root);
 
+            int totalNumberOfScannedNodes = 2;
             while (!solutionFound)
             {
                 //Forward Move (from current to goal):
-                var ftop = forward_heap.Remove(); //Get from the heap the best move
-                foreach (var move in ftop.state.PossibleMoves())
+                var forward_top = forward_heap.Remove(); //Get from the heap the best move
+                foreach (var move in forward_top.state.PossibleMoves())
                 {
-                    RushHour nextState = ftop.state.Clone();
+                    RushHour nextState = forward_top.state.Clone();
                     nextState.Move(move);
                     string next_hash = nextState.GetHash();
                     if (!forward_dict.ContainsKey(next_hash))
                     {   //If the state is new
                         totalNumberOfScannedNodes++;
-                        Node next = new Node(ftop, nextState, move, ftop.height + 1, ForwardScore);
+                        Node next = new Node(forward_top, nextState, move, forward_top.height + 1, ForwardScore);
                         forward_dict.Add(next_hash, next);
-                        if (true /*backward_dict.ContainsKey(next_hash)*/)
+                        if (backward_dict.ContainsKey(next_hash))
                         {   //If found solution
-                            //TODO
-                            forward_ans = next;
-                            //backward_ans = backward_dict[next_hash];
+                            forward_ans   = next;
+                            backward_ans  = backward_dict[next_hash];
                             solutionFound = true;
                         }
                         else
@@ -279,9 +282,30 @@ namespace SuperUltraAwesomeAI
                     }
                 }
                 if (!solutionFound)
-                {
-                    //Backward Move (from goal to current):
-                    //TODO.
+                {   //Backward Move (from goal to current):
+                    var backward_top = backward_heap.Remove(); //Get from the heap the best move
+                    foreach (var move in backward_top.state.PossibleMoves())
+                    {
+                        RushHour nextState = backward_top.state.Clone();
+                        nextState.Move(move);
+                        string next_hash = nextState.GetHash();
+                        if (!backward_dict.ContainsKey(next_hash))
+                        {   //If the state is new
+                            totalNumberOfScannedNodes++;
+                            Node next = new Node(backward_top, nextState, move, backward_top.height + 1, ForwardScore);
+                            backward_dict.Add(next_hash, next);
+                            if (forward_dict.ContainsKey(next_hash))
+                            {   //If found solution
+                                backward_ans  = next;
+                                forward_ans   = forward_dict[next_hash];
+                                solutionFound = true;
+                            }
+                            else
+                            {   //Add node to the heap (if the state is new)
+                                backward_heap.Insert(next);
+                            }
+                        }
+                    }
                 }
             }
 
