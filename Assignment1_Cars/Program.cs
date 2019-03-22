@@ -27,6 +27,7 @@ namespace SuperUltraAwesomeAI
         public string solutionStr;
         public int max;
         public int min;
+
     }
     class RushHour
     {
@@ -58,6 +59,8 @@ namespace SuperUltraAwesomeAI
         //            Fields:
         Dictionary<char, CarDetails> cars;
         char[,] board;
+        bool freedomIncreased;
+        bool newCarBlocked;
 
         #endregion
 
@@ -333,6 +336,8 @@ namespace SuperUltraAwesomeAI
         {
             board = new char[BOARD_SIZE, BOARD_SIZE];
             cars = new Dictionary<char, CarDetails>(BOARD_SIZE * BOARD_SIZE / 2);
+            freedomIncreased = false;
+            newCarBlocked = false;
             for (int i = 0; i < BOARD_SIZE; i++)
             {
                 for (int j = 0; j < BOARD_SIZE; j++)
@@ -371,7 +376,7 @@ namespace SuperUltraAwesomeAI
         /// <returns> Perceived value of current state </returns>
         int CalculateScore()
         {
-            return Heuristic6();
+            return Heuristic9();
         }
 
         //Number of cars blocking the red car
@@ -506,7 +511,8 @@ namespace SuperUltraAwesomeAI
         }
 
         /// <summary>
-        /// Implementation of first heuristic from assignment
+        /// Calculate how many cars need to be moved and how far.
+        /// Depth of one.
         /// </summary>
         int Heuristic5()
         {
@@ -539,6 +545,11 @@ namespace SuperUltraAwesomeAI
 
         // This is a dirty solution, not to be 
         // implemented in any respectable workplace
+        /// <summary>
+        /// Calculate how many cars need to be moved, and how far.
+        /// To the depth of two.
+        /// </summary>
+        /// <returns></returns>
         int Heuristic6()
         {
             int _r = 0; //Result
@@ -584,6 +595,162 @@ namespace SuperUltraAwesomeAI
         }
 
         /// <summary>
+        /// Heuristics 5 with indicators
+        /// Calculate how many cars need to be moved and how far.
+        /// Depth of one. Includes indicators
+        /// </summary>
+        int Heuristic7()
+        {
+            int _r = 0; //Result
+            CarDetails _c = cars['X']; // Red car
+            // Check every position from the car to exit
+            for (int _p = _c.posX + _c.size; _p < BOARD_SIZE; _p++)
+            {
+                // Check for Blocking Car
+                char _bc = board[_c.posY, _p];
+                if (_bc != '.')
+                {
+                    // Count blocking car
+                    _r++;
+                    // Count tiles to move the blocking car
+                    var car = cars[_bc];
+                    int up = car.posY - 1, down = car.posY + car.size;
+                    int _d1 = 8, _d2 = 8;
+                    // check if we can move the car up
+                    if (car.size - 1 < _c.posY)
+                        _d1 = (down - 1) - _c.posY + 1; // count minimum tiles to move up
+                    // check if we can move the car down
+                    else if (BOARD_SIZE - car.size > _c.posY)
+                        _d2 = _c.posY - car.posY + 1;    // count minimum tiles to move up
+                    _r += Min(_d1, _d2);
+                }
+            }
+            //_r += (newCarBlocked ? 1 : 0);
+            //_r += (freedomIncreased ? 0 : 1);
+            _r += (newCarBlocked ? 1 : 0) + (freedomIncreased ? 0 : 1);
+            return _r;
+        }
+
+        // This is a dirty solution, not to be 
+        // implemented in any respectable workplace
+        /// <summary>
+        /// Heuristics 6 with indicators
+        /// Calculate how many cars need to be moved, and how far.
+        /// To the depth of two.
+        /// </summary>
+        /// <returns></returns>
+        int Heuristic8()
+        {
+            int _r = 0; //Result
+            char _bc;
+            CarDetails _c = cars['X']; // Red car
+            // Check every position from the red car to exit
+            for (int _p = _c.posX + _c.size; _p < BOARD_SIZE; _p++)
+            {
+                // Check for Blocking Car
+                _bc = board[_c.posY, _p];
+                if (_bc != '.')
+                {
+                    // Count blocking car
+                    _r++;
+                    // Count the minimum required tiles to move the blocking car
+                    var car = cars[_bc];
+                    int up = car.posY - 1, down = car.posY + car.size;
+                    int _d1 = 8, _d2 = 8;
+                    // check if we can move the car up
+                    if (car.size - 1 < _c.posY)
+                    {
+                        int cost = 0;
+                        _d1 = down - _c.posY; // count minimum tiles to move up
+                        // Count blocking cars on the way
+                        for (int x = up; x < up - _d1; x--)
+                            if (board[x, car.posX] != '.') cost++;
+                        _d1 += cost; // add the cost
+                    }
+                    // check if we can move the car down
+                    else if (BOARD_SIZE - car.size > _c.posY)
+                    {
+                        int cost = 0;
+                        _d2 = _c.posY - car.posY + 1;    // count minimum tiles to move down
+                        // Count blocking cars on the way
+                        for (int x = down; x < down + _d2; x++)
+                            if (board[x, car.posX] != '.') cost++;
+                        _d2 += cost;
+                    }
+                    _r += Min(_d1, _d2);
+                }
+            }
+            //_r += (newCarBlocked ? 1 : 0);
+            //_r += (freedomIncreased ? 0 : 1);
+            _r += (newCarBlocked ? 1 : 0) + (freedomIncreased ? 0 : 1);
+            return _r;
+        }
+
+        ///<summary>This is Heuristics 4 with indicators from lab 2</summary>
+        /// <returns>Lower bound on the number of cars needed to move</returns>
+        int Heuristic9()
+        {
+            var carsSet = new HashSet<char>();
+            int CountCars(char carName)
+            {
+                int count = 0;
+                if (carName != '.' && carsSet.Add(carName))
+                {
+                    var car = cars[carName];
+                    count++;
+                    if (carName == 'X')
+                    {
+                        for (int i = car.posX + car.size; i < BOARD_SIZE; i++)
+                        {
+                            count += CountCars(board[RED_CAR_Y_INDEX, i]);
+                        }
+                    }
+                    else
+                    {
+                        if (car.axis == CarDetails.Axis.X)
+                        {
+                            int left = car.posX - 1, right = car.posX + car.size;
+                            if (left < 0)
+                            {
+                                count += CountCars(board[car.posY, right]);
+                            }
+                            else if (right == BOARD_SIZE)
+                            {
+                                count += CountCars(board[car.posY, left]);
+                            }
+                            else if (board[car.posY, left] != '.' && board[car.posY, right] != '.')
+                            {
+                                count += Max(1, Min(CountCars(board[car.posY, right]), CountCars(board[car.posY, left])));
+                            }
+                        }
+                        else
+                        {
+                            int up = car.posY - 1, down = car.posY + car.size;
+                            if (up < 0)
+                            {
+                                CountCars(board[down, car.posX]);
+                            }
+                            else if (down == BOARD_SIZE)
+                            {
+                                CountCars(board[up, car.posX]);
+                            }
+                            else if (board[up, car.posX] != '.' && board[down, car.posX] != '.')
+                            {
+                                count += Max(1, Min(CountCars(board[up, car.posX]), CountCars(board[up, car.posX])));
+                            }
+                        }
+                    }
+                }
+                return count;
+            }
+            int a = 0;
+            //a = (newCarBlocked ? 1 : 0);
+            //a = (freedomIncreased ? 0 : 1);
+            a = (newCarBlocked ? 1 : 0) + (freedomIncreased ? 0 : 1);
+            return CountCars('X') + a;
+        }
+
+        /// <summary>
         /// Heuristic function for the doubly A*
         /// </summary>
         /// <returns>Number of cars with different positions</returns>
@@ -592,11 +759,33 @@ namespace SuperUltraAwesomeAI
         #endregion
 
         /// <returns>Number of cars that can move</returns>
-        public int FreedomLevel() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ?
-                                                      (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
-                                                      (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
-                                                      (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
-                                                      (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
+        public int FreedomLevel() => cars.Keys.Count(car => !Blocked(car));
+
+        /// <summary>
+        /// Check if there are any cars that can't move and returns a hash of their keys
+        /// </summary>
+        /// <returns>HashSet of keys of blocked cars</returns>
+        public HashSet<char> ListBlockedCars() => new HashSet<char>(cars.Keys.Where(key => Blocked(key)), null);
+
+        /// <summary>
+        /// Checks whenether the car with a given key is blocked
+        /// </summary>
+        /// <param name="_cd">Car key to check</param>
+        /// <returns>True is the car cannot move</returns>
+        private bool Blocked(char _cd)
+        {
+            CarDetails _c = cars[_cd];
+            return !(_c.axis == CarDetails.Axis.X ? (_c.posX != 0 && board[_c.posY, _c.posX - 1] == '.') ||
+                    (_c.posX + _c.size != BOARD_SIZE && board[_c.posY, _c.posX + _c.size - 1] == '.') :
+                                                   (_c.posY != 0 && board[_c.posY - 1, _c.posX] == '.') ||
+                    (_c.posY + _c.size != BOARD_SIZE && board[_c.posY + _c.size - 1, _c.posX] == '.'));
+        }
+
+        public bool CarBecameBlocked()
+        {
+            
+            return true;
+        }
 
 
         ///<summary>
@@ -621,6 +810,8 @@ namespace SuperUltraAwesomeAI
             }
             return new RushHour
             {
+                freedomIncreased = this.freedomIncreased,
+                newCarBlocked = this.newCarBlocked,
                 cars  = dict,
                 board = (char[,])board.Clone()
             };
@@ -636,6 +827,10 @@ namespace SuperUltraAwesomeAI
         ///<example>AU2 moves car A up by 2 cells </example>
         void Move(string action)
         {
+            // save blocked cars and level of freedom before moving
+            int fr = this.FreedomLevel();
+            HashSet<char> _blc = ListBlockedCars();
+
             if (action != null)
             {
                 var car = cars[action[0]];
@@ -663,6 +858,9 @@ namespace SuperUltraAwesomeAI
                     }
                 }
             }
+            // update internal variables after the move
+            freedomIncreased = fr < FreedomLevel();
+            newCarBlocked = !ListBlockedCars().IsSubsetOf(_blc);
         }
 
         /// <summary>
