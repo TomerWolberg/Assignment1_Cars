@@ -27,7 +27,6 @@ namespace SuperUltraAwesomeAI
         public string solutionStr;
         public int max;
         public int min;
-        public RushHour solutionState;
     }
     public class RushHour
     {
@@ -226,7 +225,72 @@ namespace SuperUltraAwesomeAI
                 dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes,
                 max = root.MaxDepth(),
                 min = root.MinDepth(), 
-                solutionState = ans.parent.state
+            };
+        }
+        public struct BiDirectionalVsAStar
+        {
+            public LabAnswer a_star, bidirectional;
+        }
+        public BiDirectionalVsAStar BidirectionalAstar()
+        {
+            LabAnswer a_star    = BestFS();
+            RushHour goal_state = Clone();
+            string[] moves      = a_star.solutionStr.Split(' ');
+            for (int i = 0; i < moves.Length - 1; i++)
+            {
+                goal_state.Move(moves[i]);
+            }
+
+            int ForwardScore(RushHour st, int h)  => h + st.Distance(goal_state);
+            int BackwardScore(RushHour st, int h) => h + Distance(st);
+          
+            Node forward_ans   = null;
+            bool solutionFound = false;
+            Node forward_root  = new Node(null, this, null, 0, ForwardScore);
+            var forward_dict   = new Dictionary<string, Node> { { GetHash(), forward_root } };
+            var forward_heap   = new NodesMinHeap(forward_root);
+            int totalNumberOfScannedNodes = 2;
+
+            while (!solutionFound)
+            {
+                //Forward Move (from current to goal):
+                var ftop = forward_heap.Remove(); //Get from the heap the best move
+                foreach (var move in ftop.state.PossibleMoves())
+                {
+                    RushHour nextState = ftop.state.Clone();
+                    nextState.Move(move);
+                    string next_hash = nextState.GetHash();
+                    if (!forward_dict.ContainsKey(next_hash))
+                    {   //If the state is new
+                        totalNumberOfScannedNodes++;
+                        Node next = new Node(ftop, nextState, move, ftop.height + 1, ForwardScore);
+                        forward_dict.Add(next_hash, next);
+                        if (true /*backward_dict.ContainsKey(next_hash)*/)
+                        {   //If found solution
+                            //TODO
+                            forward_ans = next;
+                            //backward_ans = backward_dict[next_hash];
+                            solutionFound = true;
+                        }
+                        else
+                        {   //Add node to the heap (if the state is new)
+                            forward_heap.Insert(next);
+                        }
+                    }
+                }
+                if (!solutionFound)
+                {
+                    //Backward Move (from goal to current):
+                    //TODO.
+                }
+            }
+
+            //TODO: add code here to get the solution from forward_ans + backward_ans
+
+            return new BiDirectionalVsAStar
+            {
+                a_star = a_star,
+                bidirectional = null //...
             };
         }
         #endregion
@@ -260,7 +324,7 @@ namespace SuperUltraAwesomeAI
                 string ans = string.Empty;
                 while (sol.parent != null)
                 {
-                    ans = sol.action + " " + ans;
+                    ans = sol.action + (ans != "" ? (" " + ans) : "");
                     sol = sol.parent;
                 }
                 return ans;
@@ -276,6 +340,7 @@ namespace SuperUltraAwesomeAI
             public readonly int nodeScore;
             public readonly int height;
             public readonly List<Node> sons;
+            public readonly Func<RushHour, int, int> scoreFunction;
 
             /// <summary>
             ///Sets the class feilds.
@@ -285,8 +350,17 @@ namespace SuperUltraAwesomeAI
             public Node(Node     p  ,
                         RushHour st ,
                         string   a  ,
-                        int      h  )
+                        int      h  ,
+                        Func<RushHour, int, int> score = null)
             {
+                if (score != null)
+                {
+                    scoreFunction = score;
+                }
+                else
+                {
+                    scoreFunction = (_st, _h) => _h + _st.CalculateScore();
+                }
                 sons = new List<Node>();
                 action = a;
                 parent = p;
@@ -294,7 +368,7 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state = st.Clone();
-                    nodeScore = h + st.CalculateScore();
+                    nodeScore = scoreFunction(st, h);
                 }
                 if (p != null)
                 {
@@ -314,7 +388,7 @@ namespace SuperUltraAwesomeAI
                 string ans = string.Empty;
                 while (sol.parent != null)
                 {
-                    ans = sol.action + " " + ans;
+                    ans = sol.action + (ans != "" ? (" " + ans) : "");
                     sol = sol.parent;
                 }
                 return ans;
@@ -687,98 +761,6 @@ namespace SuperUltraAwesomeAI
             return _r;
         }
 
-        /// <summary>
-        /// Heuristics 5 with indicators
-        /// Calculate how many cars need to be moved and how far.
-        /// Depth of one. Includes indicators
-        /// </summary>
-        int Heuristic7()
-        {
-            int _r = 0; //Result
-            CarDetails _c = cars['X']; // Red car
-            // Check every position from the car to exit
-            for (int _p = _c.posX + _c.size; _p < BOARD_SIZE; _p++)
-            {
-                // Check for Blocking Car
-                char _bc = board[_c.posY, _p];
-                if (_bc != '.')
-                {
-                    // Count blocking car
-                    _r++;
-                    // Count tiles to move the blocking car
-                    var car = cars[_bc];
-                    int up = car.posY - 1, down = car.posY + car.size;
-                    int _d1 = 8, _d2 = 8;
-                    // check if we can move the car up
-                    if (car.size - 1 < _c.posY)
-                        _d1 = (down - 1) - _c.posY + 1; // count minimum tiles to move up
-                    // check if we can move the car down
-                    else if (BOARD_SIZE - car.size > _c.posY)
-                        _d2 = _c.posY - car.posY + 1;    // count minimum tiles to move up
-                    _r += Min(_d1, _d2);
-                }
-            }
-            //_r += (newCarBlocked ? 1 : 0);
-            //_r += (freedomIncreased ? 0 : 1);
-            _r += (newCarBlocked ? 1 : 0) + (freedomIncreased ? 0 : 1);
-            return _r;
-        }
-
-        // This is a dirty solution, not to be 
-        // implemented in any respectable workplace
-        /// <summary>
-        /// Heuristics 6 with indicators
-        /// Calculate how many cars need to be moved, and how far.
-        /// To the depth of two.
-        /// </summary>
-        /// <returns></returns>
-        int Heuristic8()
-        {
-            int _r = 0; //Result
-            char _bc;
-            CarDetails _c = cars['X']; // Red car
-            // Check every position from the red car to exit
-            for (int _p = _c.posX + _c.size; _p < BOARD_SIZE; _p++)
-            {
-                // Check for Blocking Car
-                _bc = board[_c.posY, _p];
-                if (_bc != '.')
-                {
-                    // Count blocking car
-                    _r++;
-                    // Count the minimum required tiles to move the blocking car
-                    var car = cars[_bc];
-                    int up = car.posY - 1, down = car.posY + car.size;
-                    int _d1 = 8, _d2 = 8;
-                    // check if we can move the car up
-                    if (car.size - 1 < _c.posY)
-                    {
-                        int cost = 0;
-                        _d1 = down - _c.posY; // count minimum tiles to move up
-                        // Count blocking cars on the way
-                        for (int x = up; x < up - _d1; x--)
-                            if (board[x, car.posX] != '.') cost++;
-                        _d1 += cost; // add the cost
-                    }
-                    // check if we can move the car down
-                    else if (BOARD_SIZE - car.size > _c.posY)
-                    {
-                        int cost = 0;
-                        _d2 = _c.posY - car.posY + 1;    // count minimum tiles to move down
-                        // Count blocking cars on the way
-                        for (int x = down; x < down + _d2; x++)
-                            if (board[x, car.posX] != '.') cost++;
-                        _d2 += cost;
-                    }
-                    _r += Min(_d1, _d2);
-                }
-            }
-            //_r += (newCarBlocked ? 1 : 0);
-            //_r += (freedomIncreased ? 0 : 1);
-            _r += (newCarBlocked ? 1 : 0) + (freedomIncreased ? 0 : 1);
-            return _r;
-        }
-
         ///<summary>This is Heuristics 4 with indicators from lab 2</summary>
         /// <returns>Lower bound on the number of cars needed to move</returns>
         int Heuristic9()
@@ -844,7 +826,7 @@ namespace SuperUltraAwesomeAI
         }
 
         /// <summary>
-        /// Heuristic function for the doubly A*
+        /// Heuristic function for the Bidirectional A*
         /// </summary>
         /// <returns>Number of cars with different positions</returns>
         int Distance(RushHour goal) => cars.Keys.Count(c => (cars[c].posX + cars[c].posY) != (goal.cars[c].posX + goal.cars[c].posY));
@@ -1168,7 +1150,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     if (finished)
                     {
                         LabAnswer _tr = task.Result;
-                        int len = _tr.solutionStr.Split(' ').Length - 1;
+                        int len = _tr.solutionStr.Split(' ').Length;
                         avgDepth += _tr.max;
                         Console.WriteLine("Level " + level + " - Succeeded in " + len + " moves");
                         outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
