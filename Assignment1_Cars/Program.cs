@@ -27,6 +27,9 @@ namespace SuperUltraAwesomeAI
         public string solutionStr;
         public int max;
         public int min;
+
+        public bool[] DOFI { get; internal set; }
+        public bool[] NCB { get; internal set; }
     }
     class RushHour
     {
@@ -217,7 +220,7 @@ namespace SuperUltraAwesomeAI
             }
 
 
-            //Create stack of 
+            // Create stack of moves that lead FROM solution to the begining
             Stack<RushHour> answers = new Stack<RushHour>();
             Node _n = ans;
             while (_n.parent != null)
@@ -225,8 +228,19 @@ namespace SuperUltraAwesomeAI
                 answers.Push(_n.state);
                 _n = _n.parent;
             }
-            
+            // Create variables to store return values for lab 2
+            bool[] DegreeOfFreedomIncreased = new bool[answers.Count];
+            bool[] NewCarsBlocked = new bool[answers.Count];
 
+            // Unwind stack and fill return values
+            RushHour parent = answers.Pop(), child;
+            int _si = 0;
+            while (answers.Count != 0)
+            {
+                child = answers.Pop();
+                DegreeOfFreedomIncreased[_si] = child.FreedomLevel() > parent.FreedomLevel();
+                NewCarsBlocked[_si++] = child.ListBlockedCars().IsSubsetOf(parent.ListBlockedCars());
+            }
 
             return new LabAnswer
             {
@@ -234,7 +248,9 @@ namespace SuperUltraAwesomeAI
                 numberOfNodesScanned = totalNumberOfScannedNodes,
                 dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes,
                 max = root.MaxDepth(),
-                min = root.MinDepth()
+                min = root.MinDepth(),
+                DOFI = DegreeOfFreedomIncreased,
+                NCB = NewCarsBlocked
             };
         }
         #endregion
@@ -284,7 +300,6 @@ namespace SuperUltraAwesomeAI
             public readonly int nodeScore;
             public readonly int height;
             public readonly List<Node> sons;
-            public int degreeOfFreedom;
 
             /// <summary>
             ///Sets the class feilds.
@@ -597,13 +612,35 @@ namespace SuperUltraAwesomeAI
         }
 
         #endregion
-        
+
         /// <returns>Number of cars that can move</returns>
-        public int FreedomLevel() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ?
-                                                      (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
-                                                      (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
-                                                      (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
-                                                      (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
+        public int FreedomLevel() => cars.Keys.Count(car => !Blocked(car));
+
+        /// <summary>
+        /// Check if there are any cars that can't move and returns a hash of their keys
+        /// </summary>
+        /// <returns>HashSet of keys of blocked cars</returns>
+        public HashSet<char> ListBlockedCars() => new HashSet<char>(cars.Keys.Where(key => Blocked(key)), null);
+
+        /// <summary>
+        /// Checks whenether the car with a given key is blocked
+        /// </summary>
+        /// <param name="_cd">Car key to check</param>
+        /// <returns>True is the car cannot move</returns>
+        private bool Blocked(char _cd)
+        {
+            CarDetails _c = cars[_cd];
+            return !(_c.axis == CarDetails.Axis.X ? (_c.posX != 0 && board[_c.posY, _c.posX - 1] == '.') ||
+                    (_c.posX + _c.size != BOARD_SIZE && board[_c.posY, _c.posX + _c.size - 1] == '.') :
+                                                   (_c.posY != 0 && board[_c.posY - 1, _c.posX] == '.') ||
+                    (_c.posY + _c.size != BOARD_SIZE && board[_c.posY + _c.size - 1, _c.posX] == '.'));
+        }
+
+        public bool CarBecameBlocked()
+        {
+            
+            return true;
+        }
 
         ///<summary>
         ///Create a deep copy of the RushHour class
