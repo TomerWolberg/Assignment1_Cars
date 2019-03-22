@@ -583,14 +583,21 @@ namespace SuperUltraAwesomeAI
             return _r;
         }
 
+        /// <summary>
+        /// Heuristic function for the doubly A*
+        /// </summary>
+        /// <returns>Number of cars with different positions</returns>
+        int Distance(RushHour goal) => cars.Keys.Count(c => (cars[c].posX + cars[c].posY) != (goal.cars[c].posX + goal.cars[c].posY));
+
         #endregion
-        
+
         /// <returns>Number of cars that can move</returns>
         public int FreedomLevel() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ?
                                                       (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
                                                       (car.posX != BOARD_SIZE - 1 && board[car.posY, car.posX + 1] == '.') :
                                                       (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
                                                       (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
+
 
         ///<summary>
         ///Create a deep copy of the RushHour class
