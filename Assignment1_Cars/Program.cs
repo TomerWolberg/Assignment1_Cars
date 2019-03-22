@@ -340,8 +340,7 @@ namespace SuperUltraAwesomeAI
             public readonly int nodeScore;
             public readonly int height;
             public readonly List<Node> sons;
-            public readonly Func<RushHour, int, int> scoreFunction;
-
+            
             /// <summary>
             ///Sets the class feilds.
             ///If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
@@ -353,14 +352,6 @@ namespace SuperUltraAwesomeAI
                         int      h  ,
                         Func<RushHour, int, int> score = null)
             {
-                if (score != null)
-                {
-                    scoreFunction = score;
-                }
-                else
-                {
-                    scoreFunction = (_st, _h) => _h + _st.CalculateScore();
-                }
                 sons = new List<Node>();
                 action = a;
                 parent = p;
@@ -368,7 +359,10 @@ namespace SuperUltraAwesomeAI
                 if (st != null)
                 {
                     state = st.Clone();
-                    nodeScore = scoreFunction(st, h);
+                    if (score == null)
+                        nodeScore = h + st.CalculateScore();
+                    else
+                        nodeScore = score(st, h);
                 }
                 if (p != null)
                 {
@@ -1093,8 +1087,8 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
-            int waitingTime = 0;
-
+            int waitingTime = 1;
+            
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
