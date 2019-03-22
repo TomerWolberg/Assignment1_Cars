@@ -583,8 +583,14 @@ namespace SuperUltraAwesomeAI
             return _r;
         }
 
+        /// <summary>
+        /// Heuristic function for the doubly A*
+        /// </summary>
+        /// <returns>Number of cars with different positions</returns>
+        int Distance(RushHour goal) => cars.Keys.Count(c => (cars[c].posX + cars[c].posY) != (goal.cars[c].posX + goal.cars[c].posY));
+
         #endregion
-        
+
         /// <returns>Number of cars that can move</returns>
         public int FreedomLevel() => cars.Values.Count(car => car.axis == CarDetails.Axis.X ?
                                                       (car.posX != 0 && board[car.posY, car.posX - 1] == '.') ||
@@ -592,33 +598,25 @@ namespace SuperUltraAwesomeAI
                                                       (car.posY != 0 && board[car.posY - 1, car.posX] == '.') ||
                                                       (car.posY != BOARD_SIZE - 1 && board[car.posY + 1, car.posX] == '.'));
 
+
         ///<summary>
         ///Create a deep copy of the RushHour class
         ///</summary>
         ///<returns>
         ///A copy of RushHour class
         /// </returns>
-        public RushHour Clone()
+        public RushHour Clone() => new RushHour
         {
-            var dict = new Dictionary<char, CarDetails>(cars.Count);
-            foreach (var item in cars)
+            cars = cars.ToDictionary(item => item.Key, item => new CarDetails
             {
-                var car = item.Value;
-                dict.Add(item.Key, new CarDetails
-                {
-                    size = car.size,
-                    axis = car.axis,
-                    posX = car.posX,
-                    posY = car.posY
-                });
-            }
-            return new RushHour
-            {
-                cars  = dict,
-                board = (char[,])board.Clone()
-            };
-        }
-
+                size = item.Value.size,
+                axis = item.Value.axis,
+                posX = item.Value.posX,
+                posY = item.Value.posY
+            }),
+            board = (char[,])board.Clone()
+        };
+        
         //Check if there aren't any cars that are blocking the way
         bool CanReachGoal() => Heuristic1() == 0;
 
@@ -822,6 +820,7 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
             int waitingTime = 0;
+
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
