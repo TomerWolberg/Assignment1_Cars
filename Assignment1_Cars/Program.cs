@@ -244,15 +244,15 @@ namespace SuperUltraAwesomeAI
             int ForwardScore(RushHour st, int h)  => h + st.Distance(goal_state);
             int BackwardScore(RushHour st, int h) => h + Distance(st);
           
-            Node forward_ans    = null;
-            Node backward_ans   = null;
-            bool solutionFound  = false;
-            Node forward_root   = new Node(null, this, null, 0, ForwardScore);
-            Node backward_root  = new Node(null, goal_state, null, 0, BackwardScore);
-            var  forward_dict   = new Dictionary<string, Node> { { GetHash(), forward_root } };
-            var  backward_dict  = new Dictionary<string, Node> { { goal_state.GetHash(), backward_root } };
-            var  forward_heap   = new NodesMinHeap(forward_root);
-            var  backward_heap  = new NodesMinHeap(backward_root);
+            Node forward_ans   = null;
+            Node backward_ans  = null;
+            bool solutionFound = false;
+            Node forward_root  = new Node(null, this, null, 0, ForwardScore);
+            Node backward_root = new Node(null, goal_state, null, 0, BackwardScore);
+            var  forward_dict  = new Dictionary<string, Node> { { GetHash(), forward_root } };
+            var  backward_dict = new Dictionary<string, Node> { { goal_state.GetHash(), backward_root } };
+            var  forward_heap  = new NodesMinHeap(forward_root);
+            var  backward_heap = new NodesMinHeap(backward_root);
 
             int totalNumberOfScannedNodes = 2;
             while (!solutionFound)
@@ -292,7 +292,7 @@ namespace SuperUltraAwesomeAI
                         if (!backward_dict.ContainsKey(next_hash))
                         {   //If the state is new
                             totalNumberOfScannedNodes++;
-                            Node next = new Node(backward_top, nextState, move, backward_top.height + 1, ForwardScore);
+                            Node next = new Node(backward_top, nextState, move, backward_top.height + 1, BackwardScore);
                             backward_dict.Add(next_hash, next);
                             if (forward_dict.ContainsKey(next_hash))
                             {   //If found solution
@@ -308,13 +308,18 @@ namespace SuperUltraAwesomeAI
                     }
                 }
             }
-
-            //TODO: add code here to get the solution from forward_ans + backward_ans
-
+            
             return new BiDirectionalVsAStar
             {
                 a_star = a_star,
-                bidirectional = null //...
+                bidirectional = new LabAnswer
+                {
+                    solutionStr          = forward_ans.GetSolution() + " " + string.Join(" ", backward_ans.GetSolution().Split(' ').Reverse().ToArray()) + " " + moves[moves.Length - 1],
+                    dnRatio              = (float)(forward_ans.height + backward_ans.height - 1) / totalNumberOfScannedNodes,
+                    numberOfNodesScanned = totalNumberOfScannedNodes,
+                    max                  = Max(forward_root.MaxDepth(), backward_root.MaxDepth()),
+                    min                  = Min(forward_root.MinDepth(), backward_root.MinDepth())
+                }
             };
         }
         #endregion
@@ -1112,7 +1117,29 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
             int waitingTime = 1;
-            
+
+            //Test Bidirectional search
+            int lll = 1;
+            foreach (var item in text.Split('\n'))
+            {
+                var j = new RushHour(item).BidirectionalAstar();
+                var _tr = j.a_star;
+                int len = _tr.solutionStr.Split(' ').Length;
+                Console.WriteLine("A*:");
+                Console.WriteLine("Level " + lll + " - Succeeded in " + len + " moves");
+                Console.WriteLine("Solution: " + _tr.solutionStr);
+                Console.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
+                Console.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr.max, _tr.min));
+
+                var _tr2 = j.bidirectional;
+                len = _tr2.solutionStr.Split(' ').Length;
+                Console.WriteLine("Bidirectional:");
+                Console.WriteLine("Level " + lll++ + " - Succeeded in " + len + " moves");
+                Console.WriteLine("Solution: " + _tr2.solutionStr);
+                Console.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr2.numberOfNodesScanned, _tr2.dnRatio));
+                Console.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr2.max, _tr2.min));
+            }
+
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
