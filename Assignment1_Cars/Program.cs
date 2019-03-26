@@ -479,8 +479,20 @@ namespace SuperUltraAwesomeAI
             int h8 = 1;
             int h9 = 1;
             int h10 = 0;
-            return Math.Min(Math.Min(Math.Min(Math.Min(h1 * Heuristic1(), h2 * Heuristic2()), Math.Min(h3 * Heuristic3(), h4 * Heuristic4())), Math.Min(h5 * Heuristic5(), h6 * Heuristic6())), Math.Min(Math.Min(h7 * Heuristic7(), h8 * Heuristic8()), Math.Min(h9 * Heuristic9(), h10)));
-            //return Math.Max(Math.Max(Math.Max(Math.Max(h1*Heuristic1(),h2*Heuristic2()), Math.Max(h3*Heuristic3(),h4*Heuristic4())), Math.Max(h5*Heuristic5(),h6*Heuristic6())), Math.Max(Math.Max(h7*Heuristic7(),h8*Heuristic8()), Math.Max(h9*Heuristic9(),h10)));
+
+            return new int[]
+            {
+                h1 * Heuristic1(),
+                h2 * Heuristic2(),
+                h3 * Heuristic3(),
+                h4 * Heuristic4(),
+                h5 * Heuristic5(),
+                h6 * Heuristic6(),
+                h7 * Heuristic7(),
+                h8 * Heuristic8(),
+                h9 * Heuristic9(),
+                h10 //??? always returns 0 because h10 = 0
+            }.Min();
         }
 
         //Number of cars blocking the red car
@@ -1121,7 +1133,7 @@ AAB.CCDDB.OPQXX.OPQRRROPQ..EFFGG.EHH
 A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
-
+            
             int waitingTime = 1;
             
             #region Input Arguments
