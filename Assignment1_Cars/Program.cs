@@ -412,7 +412,7 @@ namespace SuperUltraAwesomeAI
                 {   //If we found optimal solution
                     break;
                 }
-                Console.WriteLine(solution.Length / 4);
+
                 //Update the weights of the actions
                 UpdateWeights(y0, GetActions(solution));
             }
@@ -1228,11 +1228,7 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             
             int waitingTime = 1;
-            foreach (var item in text.Split('\n'))
-            {
-                new RushHour(item).ReinforcementLearning();
-                Console.WriteLine("Suceess");
-            }
+
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
