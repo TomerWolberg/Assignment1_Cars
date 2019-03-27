@@ -361,7 +361,6 @@ namespace SuperUltraAwesomeAI
             }
         }
 
-
         struct PerceptronInput
         {
             public string stateHash;
@@ -373,11 +372,9 @@ namespace SuperUltraAwesomeAI
 
         /// <param name="input">state and action</param>
         /// <returns>Cost of action</returns>
-        static int Perceptron(PerceptronInput input) => ( ( weights.ContainsKey(input) ?
+        static int Perceptron(PerceptronInput input) => -( weights.ContainsKey(input) ?
                                                            weights[input]             :
-                                                           weights[input] = 0         ) < 0 ) ?
-                                                           1 : 0;
-
+                                                           weights[input] = 0         );
         /// <summary>
         /// Updates the weights of a given solution according to given optimal solution
         /// </summary>
@@ -408,11 +405,10 @@ namespace SuperUltraAwesomeAI
                         action = a
                     });
                 }).solutionStr;
-                if (solution.Length == optimalSolution.Length)
-                {   //If we found optimal solution
+                if (solution == optimalSolution)
+                {   //If we found the optimal solution
                     break;
                 }
-
                 //Update the weights of the actions
                 UpdateWeights(y0, GetActions(solution));
             }
