@@ -187,13 +187,13 @@ namespace SuperUltraAwesomeAI
         ///<summary>
         ///Best-first search informed search
         ///</summary>
-        public LabAnswer BestFS()
+        public LabAnswer BestFS(Func<RushHour, int, string, string, int> score = null)
         {
-            Node root = new Node(null, this, null, 0);
-            var heap = new NodesMinHeap(root);
-            var set = new HashSet<string>() { GetHash() };
-            Node ans = null;
-            int totalNumberOfScannedNodes = 1;
+            Node root = new Node(null, this, null, 0, score);
+            var  heap = new NodesMinHeap(root);
+            var  set  = new HashSet<string>() { GetHash() };
+            Node ans  = null;
+            int  totalNumberOfScannedNodes = 1;
 
             while (ans == null)
             {   //While we haven't found solution
@@ -205,10 +205,10 @@ namespace SuperUltraAwesomeAI
                     if (set.Add(nextState.GetHash()))
                     {   //If the state is new
                         totalNumberOfScannedNodes++;
-                        Node next = new Node(top, nextState, move, top.height + 1);
+                        Node next = new Node(top, nextState, move, top.height + 1, score);
                         if (nextState.CanReachGoal())
                         {   //Found solution
-                            ans = new Node(next, null, "XR" + nextState.Heuristic2(), top.height + 2);
+                            ans = new Node(next, null, "XR" + nextState.Heuristic2(), top.height + 2, score);
                         }
                         else
                         {   //Add node to the heap (if the state is new)
@@ -241,8 +241,8 @@ namespace SuperUltraAwesomeAI
                 goal_state.Move(moves[i]);
             }
 
-            int ForwardScore(RushHour st, int h)  => h + st.Distance(goal_state);
-            int BackwardScore(RushHour st, int h) => h + Distance(st);
+            int ForwardScore(RushHour st, int h, string a, string p)  => h + st.Distance(goal_state);
+            int BackwardScore(RushHour st, int h, string a, string p) => h + Distance(st);
           
             Node forward_ans   = null;
             Node backward_ans  = null;
@@ -361,6 +361,79 @@ namespace SuperUltraAwesomeAI
             }
         }
 
+
+        struct PerceptronInput
+        {
+            public string stateHash;
+            public string action;
+        }
+
+        //Table of the weights of each action
+        readonly static Dictionary<PerceptronInput, int> weights = new Dictionary<PerceptronInput, int>();
+
+        /// <param name="input">state and action</param>
+        /// <returns>Cost of action</returns>
+        static int Perceptron(PerceptronInput input) => -( weights.ContainsKey(input) ?
+                                                           weights[input]             :
+                                                           weights[input] = 0         );
+
+        /// <summary>
+        /// Updates the weights of a given solution according to given optimal solution
+        /// </summary>
+        /// <param name="y0">Optimal solution</param>
+        /// <param name="y1">Solution currently found</param>
+        void UpdateWeights(List<PerceptronInput> y0, List<PerceptronInput> y1)
+        {
+            foreach (var a in y1) weights[a]--;
+            foreach (var a in y0) weights[a]++;
+        }
+
+        public void ReinforcementLearning()
+        {
+            //We first run BFS to find optimal solution
+            string optimalSolution = BestFS((state, h, a, p) => h).solutionStr;
+            var y0 = GetActions(optimalSolution);
+            foreach (var a in y0) weights.Add(a, 0);
+
+            while (true)
+            {
+                //Run BFS according to the weights of the actions
+                string solution = BestFS((s, h, a, p) =>
+                {
+                    if (p == null) return 0;
+                    return Perceptron(new PerceptronInput
+                    {
+                        stateHash = p,
+                        action = a
+                    });
+                }).solutionStr;
+                if (solution.Length == optimalSolution.Length)
+                {   //If we found optimal solution
+                    break;
+                }
+
+                //Update the weights of the actions
+                UpdateWeights(y0, GetActions(solution));
+            }
+        }
+
+        List<PerceptronInput> GetActions(string solution)
+        {
+            string[] moves = solution.Split(' ');
+            RushHour temp  = Clone();
+            var      y     = new List<PerceptronInput>();
+            for (int i = 0; i < moves.Length - 1; i++)
+            {
+                y.Add(new PerceptronInput
+                {
+                    stateHash = temp.GetHash(),
+                    action    = moves[i]
+                });
+                temp.Move(moves[i]);
+            }
+            return y;
+        }
+
         //Node used in the BestFS function
         class Node
         {
@@ -380,7 +453,7 @@ namespace SuperUltraAwesomeAI
                         RushHour st ,
                         string   a  ,
                         int      h  ,
-                        Func<RushHour, int, int> score = null)
+                        Func<RushHour, int, string, string, int> score = null)
             {
                 sons = new List<Node>();
                 action = a;
@@ -392,7 +465,7 @@ namespace SuperUltraAwesomeAI
                     if (score == null)
                         nodeScore = h + st.AdvancedHeuristicFunction();
                     else
-                        nodeScore = score(st, h);
+                        nodeScore = score(st, h, a, parent?.state?.GetHash());
                 }
                 if (p != null)
                 {
@@ -996,6 +1069,8 @@ namespace SuperUltraAwesomeAI
             return action;
         }
 
+        static readonly Random random = new Random(); //Randomize the order of the moves
+
         //Return every possible move from current state.
         string[] PossibleMoves()
         {
@@ -1029,7 +1104,18 @@ namespace SuperUltraAwesomeAI
                 }
             }
 
-            return moves.ToArray();
+            string[] movesArray = moves.ToArray();
+
+            //Shuffle array
+            for (int i = 0; i < movesArray.Length; i++)
+            {
+                int rand         = random.Next(i, movesArray.Length);
+                var temp         = movesArray[i];
+                movesArray[i]    = movesArray[rand];
+                movesArray[rand] = temp;
+            }
+
+            return movesArray;
         }
 
         //Min heap struct for the BestFS Node
@@ -1141,7 +1227,7 @@ A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             
             int waitingTime = 1;
-            
+
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
