@@ -138,7 +138,7 @@ namespace SuperUltraAwesomeAI
                 }
                 else
                 {
-                    if (n.height + CalculateScore() < f)
+                    if (n.height + AdvancedHeuristicFunction() < f)
                     {   //Add possible moves to the stack
                         var moves = PossibleMoves();
                         for (int i = 0; i < moves.Length && sol == null; i++)
@@ -384,7 +384,7 @@ namespace SuperUltraAwesomeAI
                 {
                     state = st.Clone();
                     if (score == null)
-                        nodeScore = h + st.CalculateScore();
+                        nodeScore = h + st.AdvancedHeuristicFunction();
                     else
                         nodeScore = score(st, h);
                 }
@@ -467,7 +467,7 @@ namespace SuperUltraAwesomeAI
         /// This method is for setting the preferred heuristic for Rush Hour agent
         /// </summary>
         /// <returns> Perceived value of current state </returns>
-        int CalculateScore()
+        int AdvancedHeuristicFunction()
         {
             int h1 = 1;
             int h2 = 1;
@@ -479,8 +479,8 @@ namespace SuperUltraAwesomeAI
             int h8 = 1;
             int h9 = 1;
             int h10 = 0;
-            return Math.Min(Math.Min(Math.Min(Math.Min(h1 * Heuristic1(), h2 * Heuristic2()), Math.Min(h3 * Heuristic3(), h4 * Heuristic4())), Math.Min(h5 * Heuristic5(), h6 * Heuristic6())), Math.Min(Math.Min(h7 * Heuristic7(), h8 * Heuristic8()), Math.Min(h9 * Heuristic9(), h10)));
-            //return Math.Max(Math.Max(Math.Max(Math.Max(h1*Heuristic1(),h2*Heuristic2()), Math.Max(h3*Heuristic3(),h4*Heuristic4())), Math.Max(h5*Heuristic5(),h6*Heuristic6())), Math.Max(Math.Max(h7*Heuristic7(),h8*Heuristic8()), Math.Max(h9*Heuristic9(),h10)));
+            return Math.Min(Math.Min(Math.Min(Math.Min(h1 * Heuristic1(), h2 * Heuristic2()), Math.Min(h3 * Heuristic3(), h4 * Heuristic4())), Math.Min(h5 * Heuristic5(), h6 * Heuristic6())), Math.Min(Math.Min(h7 * Heuristic7(), h8 * Heuristic8()), h9 * Heuristic9()));
+            //return Math.Max(Math.Max(Math.Max(Math.Max(h1*Heuristic1(),h2*Heuristic2()), Math.Max(h3*Heuristic3(),h4*Heuristic4())), Math.Max(h5*Heuristic5(),h6*Heuristic6())), Math.Max(Math.Max(h7*Heuristic7(),h8*Heuristic8()), Math.Max(h9*Heuristic9(),0)));
         }
 
         //Number of cars blocking the red car
