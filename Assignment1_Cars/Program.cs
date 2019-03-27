@@ -373,9 +373,10 @@ namespace SuperUltraAwesomeAI
 
         /// <param name="input">state and action</param>
         /// <returns>Cost of action</returns>
-        static int Perceptron(PerceptronInput input) => -( weights.ContainsKey(input) ?
+        static int Perceptron(PerceptronInput input) => ( ( weights.ContainsKey(input) ?
                                                            weights[input]             :
-                                                           weights[input] = 0         );
+                                                           weights[input] = 0         ) < 0 ) ?
+                                                           0 : 1;
 
         /// <summary>
         /// Updates the weights of a given solution according to given optimal solution
