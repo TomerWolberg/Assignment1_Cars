@@ -1309,12 +1309,14 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             }
 
             ///////////////////////////////////////
-
+            
             for (int hehe = 5; hehe < 10; hehe++)
             {
+                level = 1;
+                avgDepth1 = 0;
+                t = TimeSpan.Zero;
                 using (StreamWriter outputFile = new StreamWriter("Lab2_Output_BestFS" + hehe + ".txt"))
                 {
-
                     foreach (var item in levels)
                     {
                         var task = Task.Run(() => new RushHour(item, hehe).BestFS());
@@ -1350,6 +1352,8 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
 
             avgDepth1 = 0;
             avgDepth2 = 0;
+            level = 1;
+            t = TimeSpan.Zero;
             using (StreamWriter outputFile = new StreamWriter("Lab2_Output_IDAS.txt"))
             {
                 foreach (var item in levels)
