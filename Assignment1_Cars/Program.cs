@@ -60,6 +60,7 @@ namespace SuperUltraAwesomeAI
         char[,] board;
         bool freedomIncreased;
         bool newCarBlocked;
+        public int heur;
 
         #endregion
 
@@ -190,10 +191,10 @@ namespace SuperUltraAwesomeAI
         public LabAnswer BestFS(Func<RushHour, int, string, string, int> score = null)
         {
             Node root = new Node(null, this, null, 0, score);
-            var  heap = new NodesMinHeap(root);
-            var  set  = new HashSet<string>() { GetHash() };
-            Node ans  = null;
-            int  totalNumberOfScannedNodes = 1;
+            var heap = new NodesMinHeap(root);
+            var set = new HashSet<string>() { GetHash() };
+            Node ans = null;
+            int totalNumberOfScannedNodes = 1;
 
             while (ans == null)
             {   //While we haven't found solution
@@ -224,7 +225,7 @@ namespace SuperUltraAwesomeAI
                 numberOfNodesScanned = totalNumberOfScannedNodes,
                 dnRatio = (float)ans.height / (float)totalNumberOfScannedNodes,
                 max = root.MaxDepth(),
-                min = root.MinDepth(), 
+                min = root.MinDepth(),
             };
         }
         public struct BiDirectionalVsAStar
@@ -233,26 +234,26 @@ namespace SuperUltraAwesomeAI
         }
         public BiDirectionalVsAStar BidirectionalAstar()
         {
-            LabAnswer a_star    = BestFS();
+            LabAnswer a_star = BestFS();
             RushHour goal_state = Clone();
-            string[] moves      = a_star.solutionStr.Split(' ');
+            string[] moves = a_star.solutionStr.Split(' ');
             for (int i = 0; i < moves.Length - 1; i++)
             {
                 goal_state.Move(moves[i]);
             }
 
-            int ForwardScore(RushHour st, int h, string a, string p)  => h + st.Distance(goal_state);
+            int ForwardScore(RushHour st, int h, string a, string p) => h + st.Distance(goal_state);
             int BackwardScore(RushHour st, int h, string a, string p) => h + Distance(st);
-          
-            Node forward_ans   = null;
-            Node backward_ans  = null;
+
+            Node forward_ans = null;
+            Node backward_ans = null;
             bool solutionFound = false;
-            Node forward_root  = new Node(null, this, null, 0, ForwardScore);
+            Node forward_root = new Node(null, this, null, 0, ForwardScore);
             Node backward_root = new Node(null, goal_state, null, 0, BackwardScore);
-            var  forward_dict  = new Dictionary<string, Node> { { GetHash(), forward_root } };
-            var  backward_dict = new Dictionary<string, Node> { { goal_state.GetHash(), backward_root } };
-            var  forward_heap  = new NodesMinHeap(forward_root);
-            var  backward_heap = new NodesMinHeap(backward_root);
+            var forward_dict = new Dictionary<string, Node> { { GetHash(), forward_root } };
+            var backward_dict = new Dictionary<string, Node> { { goal_state.GetHash(), backward_root } };
+            var forward_heap = new NodesMinHeap(forward_root);
+            var backward_heap = new NodesMinHeap(backward_root);
 
             int totalNumberOfScannedNodes = 2;
             while (!solutionFound)
@@ -271,8 +272,8 @@ namespace SuperUltraAwesomeAI
                         forward_dict.Add(next_hash, next);
                         if (backward_dict.ContainsKey(next_hash))
                         {   //If found solution
-                            forward_ans   = next;
-                            backward_ans  = backward_dict[next_hash];
+                            forward_ans = next;
+                            backward_ans = backward_dict[next_hash];
                             solutionFound = true;
                         }
                         else
@@ -296,8 +297,8 @@ namespace SuperUltraAwesomeAI
                             backward_dict.Add(next_hash, next);
                             if (forward_dict.ContainsKey(next_hash))
                             {   //If found solution
-                                backward_ans  = next;
-                                forward_ans   = forward_dict[next_hash];
+                                backward_ans = next;
+                                forward_ans = forward_dict[next_hash];
                                 solutionFound = true;
                             }
                             else
@@ -308,17 +309,17 @@ namespace SuperUltraAwesomeAI
                     }
                 }
             }
-            
+
             return new BiDirectionalVsAStar
             {
                 a_star = a_star,
                 bidirectional = new LabAnswer
                 {
-                    solutionStr          = forward_ans.GetSolution() + " " + string.Join(" ", backward_ans.GetSolution().Split(' ').Reverse().ToArray()) + " " + moves[moves.Length - 1],
-                    dnRatio              = (float)(forward_ans.height + backward_ans.height - 1) / totalNumberOfScannedNodes,
+                    solutionStr = forward_ans.GetSolution() + " " + string.Join(" ", backward_ans.GetSolution().Split(' ').Reverse().ToArray()) + " " + moves[moves.Length - 1],
+                    dnRatio = (float)(forward_ans.height + backward_ans.height - 1) / totalNumberOfScannedNodes,
                     numberOfNodesScanned = totalNumberOfScannedNodes,
-                    max                  = Max(forward_root.MaxDepth(), backward_root.MaxDepth()),
-                    min                  = Min(forward_root.MinDepth(), backward_root.MinDepth())
+                    max = Max(forward_root.MaxDepth(), backward_root.MaxDepth()),
+                    min = Min(forward_root.MinDepth(), backward_root.MinDepth())
                 }
             };
         }
@@ -372,9 +373,9 @@ namespace SuperUltraAwesomeAI
 
         /// <param name="input">state and action</param>
         /// <returns>Cost of action</returns>
-        static int Cost(PerceptronInput input) => -( weights.ContainsKey(input) ?
-                                                     weights[input]             :
-                                                     weights[input] = 0         );
+        static int Cost(PerceptronInput input) => -(weights.ContainsKey(input) ?
+                                                     weights[input] :
+                                                     weights[input] = 0);
         /// <summary>
         /// Updates the weights of a given solution according to given optimal solution
         /// </summary>
@@ -402,7 +403,7 @@ namespace SuperUltraAwesomeAI
                     return Cost(new PerceptronInput
                     {
                         stateHash = p,
-                        action    = a
+                        action = a
                     });
                 }).solutionStr;
                 if (solution == optimalSolution)
@@ -417,14 +418,14 @@ namespace SuperUltraAwesomeAI
         List<PerceptronInput> GetActions(string solution)
         {
             string[] moves = solution.Split(' ');
-            RushHour temp  = Clone();
-            var      y     = new List<PerceptronInput>();
+            RushHour temp = Clone();
+            var y = new List<PerceptronInput>();
             for (int i = 0; i < moves.Length - 1; i++)
             {
                 y.Add(new PerceptronInput
                 {
                     stateHash = temp.GetHash(),
-                    action    = moves[i]
+                    action = moves[i]
                 });
                 temp.Move(moves[i]);
             }
@@ -440,16 +441,16 @@ namespace SuperUltraAwesomeAI
             public readonly int nodeScore;
             public readonly int height;
             public readonly List<Node> sons;
-            
+
             /// <summary>
             /// Sets the class feilds.
             /// If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
             /// If the parent isn't null it adds this node to it's sons.
             /// </summary>
-            public Node(Node     p  ,
-                        RushHour st ,
-                        string   a  ,
-                        int      h  ,
+            public Node(Node p,
+                        RushHour st,
+                        string a,
+                        int h,
                         Func<RushHour, int, string, string, int> score = null)
             {
                 sons = new List<Node>();
@@ -501,8 +502,9 @@ namespace SuperUltraAwesomeAI
         /// It also transfers the level's string to a 2D-array.
         /// </summary>
         /// <param name="level"> The level encoded as a 36 length string </param>
-        public RushHour(string level)
+        public RushHour(string level, int he = '4')
         {
+            heur = he;
             board = new char[BOARD_SIZE, BOARD_SIZE];
             cars = new Dictionary<char, CarDetails>(BOARD_SIZE * BOARD_SIZE / 2);
             freedomIncreased = false;
@@ -545,18 +547,15 @@ namespace SuperUltraAwesomeAI
         /// <returns> Perceived value of current state </returns>
         int AdvancedHeuristicFunction()
         {
-            return new int[]
+            switch (heur)
             {
-                Heuristic1(),
-                Heuristic2(),
-                Heuristic3(),
-                Heuristic4(),
-                Heuristic5(),
-                Heuristic6(),
-                Heuristic7(),
-                Heuristic8(),
-                Heuristic9()
-            }.Min();
+                case 5: return Heuristic5();
+                case 6: return Heuristic6();
+                case 7: return Heuristic7();
+                case 8: return Heuristic8();
+                case 9: return Heuristic9();
+                default: return Heuristic4();
+            }
         }
 
         //Number of cars blocking the red car
@@ -923,6 +922,7 @@ namespace SuperUltraAwesomeAI
                 }
                 return count;
             }
+
             int a = 0;
             //a = (newCarBlocked ? 1 : 0);
             //a = (freedomIncreased ? 0 : 1);
@@ -939,7 +939,7 @@ namespace SuperUltraAwesomeAI
         #endregion
 
         /// <returns>Number of cars that can move</returns>
-        public int FreedomLevel() => cars.Keys.Count(car => !Blocked(car));
+        public int FreedomLevel() => this.PossibleMoves().Length;
 
         /// <summary>
         /// Check if there are any cars that can't move and returns a hash of their keys
@@ -963,7 +963,7 @@ namespace SuperUltraAwesomeAI
 
         public bool CarBecameBlocked()
         {
-            
+
             return true;
         }
 
@@ -978,7 +978,7 @@ namespace SuperUltraAwesomeAI
         public RushHour Clone() => new RushHour
         {
             freedomIncreased = freedomIncreased,
-            newCarBlocked    = newCarBlocked,
+            newCarBlocked = newCarBlocked,
             cars = cars.ToDictionary(item => item.Key, item => new CarDetails
             {
                 size = item.Value.size,
@@ -988,7 +988,7 @@ namespace SuperUltraAwesomeAI
             }),
             board = (char[,])board.Clone()
         };
-        
+
         //Check if there aren't any cars that are blocking the way
         bool CanReachGoal() => Heuristic1() == 0;
 
@@ -1094,9 +1094,9 @@ namespace SuperUltraAwesomeAI
             //Shuffle array
             for (int i = 0; i < movesArray.Length; i++)
             {
-                int rand         = random.Next(i, movesArray.Length);
-                var temp         = movesArray[i];
-                movesArray[i]    = movesArray[rand];
+                int rand = random.Next(i, movesArray.Length);
+                var temp = movesArray[i];
+                movesArray[i] = movesArray[rand];
                 movesArray[rand] = temp;
             }
 
@@ -1171,7 +1171,7 @@ namespace SuperUltraAwesomeAI
         /// <summary>
         /// To use different search algorithms replace "BestFS()" in line
         /// var task = Task.Run(() => new RushHour(item).BestFS())
-        /// BestFS , BidirectionalAstar, ReinforcementLearning,IDAStar
+        /// BestFS , BidirectionalAstar, ReinforcementLearning, IDAStar
         /// </summary>
         /// <param name="args"></param>
         public static void Main(string[] args)
@@ -1261,13 +1261,100 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             string[] levels = text.Split('\n');
             int level = 1;
             string finalOutput = string.Empty;
-            int avgDepth = 0;
+            int avgDepth1 = 0;
+            int avgDepth2 = 0;
 
-            using (StreamWriter outputFile = new StreamWriter("Lab1_Output.txt"))
+            using (StreamWriter outputFile1 = new StreamWriter("Lab2_Output_BestFS4.txt"))
+            {
+                using (StreamWriter outputFile2 = new StreamWriter("Lab2_Output_TwoDir.txt"))
+                {
+                    foreach (var item in levels)
+                    {
+                        var task = Task.Run(() => new RushHour(item).BidirectionalAstar());
+                        s.Start();
+                        bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
+                        s.Stop();
+                        t += TimeSpan.FromMilliseconds(s.Elapsed.Milliseconds / levels.Length);
+                        TimeSpan ts = s.Elapsed;
+                        if (finished)
+                        {
+                            LabAnswer _tr = task.Result.a_star;
+                            int len = _tr.solutionStr.Split(' ').Length;
+                            avgDepth1 += _tr.max;
+                            Console.WriteLine("Level " + level + " - Succeeded in " + len + " moves");
+                            //outputFile1.WriteLine("Solution: " + _tr.solutionStr);
+                            // Level | Number of steps | Number of nodes scanned | Depth to nodes ratio | Maximum reached depth | Minimum reached depth
+                            outputFile1.WriteLine(String.Format("{0},{1},{2:D},{3:F3},{4},{5}", level, len, _tr.numberOfNodesScanned, _tr.dnRatio, _tr.max, _tr.min));
+
+                            _tr = task.Result.bidirectional;
+                            len = _tr.solutionStr.Split(' ').Length;
+                            avgDepth2 += _tr.max;
+                            Console.WriteLine("Level " + level + " - Succeeded in " + len + " moves");
+                            //outputFile2.WriteLine("Solution: " + _tr.solutionStr);
+                            // Level | Number of steps | Number of nodes scanned | Depth to nodes ratio | Maximum reached depth | Minimum reached depth
+                            outputFile2.WriteLine(String.Format("{0},{1},{2:D},{3:F3},{4},{5}", level, len, _tr.numberOfNodesScanned, _tr.dnRatio, _tr.max, _tr.min));
+                        }
+                        else
+                        {
+                            Console.WriteLine("Level " + level + "Failed");
+                        }
+                        level++;
+                        s.Reset();
+                    }
+                    outputFile1.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth1 / level));
+                    outputFile1.WriteLine("Avg Time  = " + t);
+                    outputFile2.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth2 / level));
+                    outputFile2.WriteLine("Avg Time  = " + t);
+                }
+            }
+
+            ///////////////////////////////////////
+
+            for (int hehe = 5; hehe < 10; hehe++)
+            {
+                using (StreamWriter outputFile = new StreamWriter("Lab2_Output_BestFS" + hehe + ".txt"))
+                {
+
+                    foreach (var item in levels)
+                    {
+                        var task = Task.Run(() => new RushHour(item, hehe).BestFS());
+
+                        s.Start();
+                        bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
+                        s.Stop();
+                        t += TimeSpan.FromMilliseconds(s.Elapsed.Milliseconds / levels.Length);
+                        TimeSpan ts = s.Elapsed;
+                        if (finished)
+                        {
+                            LabAnswer _tr = task.Result;
+                            int len = _tr.solutionStr.Split(' ').Length;
+                            avgDepth1 += _tr.max;
+                            Console.WriteLine("Level " + level + " - Succeeded in " + len + " moves");
+                            //outputFile1.WriteLine("Solution: " + _tr.solutionStr);
+                            // Level | Number of steps | Number of nodes scanned | Depth to nodes ratio | Maximum reached depth | Minimum reached depth
+                            outputFile.WriteLine(String.Format("{0},{1},{2:D},{3:F3},{4},{5}", level, len, _tr.numberOfNodesScanned, _tr.dnRatio, _tr.max, _tr.min));
+                        }
+                        else
+                        {
+                            Console.WriteLine("Level " + level + "Failed");
+                        }
+                        level++;
+                        s.Reset();
+                    }
+                    outputFile.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth1 / level));
+                    outputFile.WriteLine("Avg Time  = " + t);
+                }
+            }
+
+            ////////////////////////////////////////////////
+
+            avgDepth1 = 0;
+            avgDepth2 = 0;
+            using (StreamWriter outputFile = new StreamWriter("Lab2_Output_IDAS.txt"))
             {
                 foreach (var item in levels)
                 {
-                    var task = Task.Run(() => new RushHour(item).BestFS());
+                    var task = Task.Run(() => new RushHour(item).IDAStar());
                     s.Start();
                     bool finished = task.Wait(TimeSpan.FromSeconds(waitingTime));
                     s.Stop();
@@ -1277,25 +1364,21 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     {
                         LabAnswer _tr = task.Result;
                         int len = _tr.solutionStr.Split(' ').Length;
-                        avgDepth += _tr.max;
+                        avgDepth1 += _tr.max;
+                        avgDepth2++;
                         Console.WriteLine("Level " + level + " - Succeeded in " + len + " moves");
-                        outputFile.WriteLine("Level " + level++ + " - Succeeded in " + len + " moves");
-                        outputFile.WriteLine("Solution: " + _tr.solutionStr);
-                        outputFile.WriteLine(String.Format("Number of nodes scanned:{0:D} | Depth to nodes ratio:{1:F3}", _tr.numberOfNodesScanned, _tr.dnRatio));
-                        outputFile.WriteLine(String.Format("Maximum reached depth:{0} | Minimum reached depth:{1}", _tr.max, _tr.min));
-                        outputFile.WriteLine(String.Format("Solved in : {0:00}:{1:000}", ts.Seconds, ts.Milliseconds));
+                        outputFile.WriteLine(String.Format("{0},{1},{2:D},{3:F3},{4},{5}", level++, len, _tr.numberOfNodesScanned, _tr.dnRatio, _tr.max, _tr.min));
                     }
                     else
                     {
                         Console.WriteLine("Level " + level + "Failed");
-                        outputFile.WriteLine("Level " + level++ + "Failed");
-                        outputFile.WriteLine("Timeout reached at {0:00}.{1:000}", ts.Seconds, ts.Milliseconds);
+                        outputFile.WriteLine();
+                        outputFile.WriteLine(level++ + "Failed");
                     }
                     s.Reset();
                 }
-                outputFile.WriteLine(String.Format("Avg search depth:{0:F3}", (float)avgDepth / level));
+                outputFile.WriteLine(String.Format("Avg search depth:{0:F3}", (float)(avgDepth1 / avgDepth2)));
                 outputFile.WriteLine("Avg Time  = " + t);
-                Console.WriteLine("The data was saved in: Lab1_Output.txt");
             }
         }
     }
