@@ -442,9 +442,9 @@ namespace SuperUltraAwesomeAI
             public readonly List<Node> sons;
             
             /// <summary>
-            ///Sets the class feilds.
-            ///If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
-            ///If the parent isn't null it adds this node to it's sons.
+            /// Sets the class feilds.
+            /// If the state isn't null it saves a copy of the RushHour class and caculate the heuristic value.
+            /// If the parent isn't null it adds this node to it's sons.
             /// </summary>
             public Node(Node     p  ,
                         RushHour st ,
@@ -545,29 +545,17 @@ namespace SuperUltraAwesomeAI
         /// <returns> Perceived value of current state </returns>
         int AdvancedHeuristicFunction()
         {
-            int h1 = 1;
-            int h2 = 1;
-            int h3 = 1;
-            int h4 = 1;
-            int h5 = 1;
-            int h6 = 1;
-            int h7 = 1;
-            int h8 = 1;
-            int h9 = 1;
-            int h10 = 0;
-
             return new int[]
             {
-                h1 * Heuristic1(),
-                h2 * Heuristic2(),
-                h3 * Heuristic3(),
-                h4 * Heuristic4(),
-                h5 * Heuristic5(),
-                h6 * Heuristic6(),
-                h7 * Heuristic7(),
-                h8 * Heuristic8(),
-                h9 * Heuristic9(),
-                h10 //??? always returns 0 because h10 = 0
+                Heuristic1(),
+                Heuristic2(),
+                Heuristic3(),
+                Heuristic4(),
+                Heuristic5(),
+                Heuristic6(),
+                Heuristic7(),
+                Heuristic8(),
+                Heuristic9()
             }.Min();
         }
 
@@ -1180,8 +1168,15 @@ namespace SuperUltraAwesomeAI
 
     public class Program
     {
+        /// <summary>
+        /// To use different search algorithms replace "BestFS()" in line
+        /// var task = Task.Run(() => new RushHour(item).BestFS())
+        /// BestFS , BidirectionalAstar, ReinforcementLearning,IDAStar
+        /// </summary>
+        /// <param name="args"></param>
         public static void Main(string[] args)
         {
+            #region long default input string
             string text = @"AA...OP..Q.OPXXQ.OP..Q..B...CCB.RRR.
 A..OOOA..B.PXX.BCPQQQ.CP..D.EEFFDGG.
 .............XXO...AAO.P.B.O.P.BCC.P
@@ -1222,7 +1217,8 @@ AAB.CCDDB.OPQXX.OPQRRROPQ..EFFGG.EHH
 A..OOOABBC..XXDC.R..DEER..FGGR..FQQQ
 ..AOOO..AB..XXCB.RDDCEERFGHH.RFGII..
 OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
-            
+            #endregion
+
             int waitingTime = 1;
 
             #region Input Arguments
