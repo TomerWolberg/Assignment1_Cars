@@ -372,9 +372,9 @@ namespace SuperUltraAwesomeAI
 
         /// <param name="input">state and action</param>
         /// <returns>Cost of action</returns>
-        static int Perceptron(PerceptronInput input) => -( weights.ContainsKey(input) ?
-                                                           weights[input]             :
-                                                           weights[input] = 0         );
+        static int Cost(PerceptronInput input) => -( weights.ContainsKey(input) ?
+                                                     weights[input]             :
+                                                     weights[input] = 0         );
         /// <summary>
         /// Updates the weights of a given solution according to given optimal solution
         /// </summary>
@@ -399,10 +399,10 @@ namespace SuperUltraAwesomeAI
                 string solution = BestFS((s, h, a, p) =>
                 {
                     if (p == null) return 0;
-                    return Perceptron(new PerceptronInput
+                    return Cost(new PerceptronInput
                     {
                         stateHash = p,
-                        action = a
+                        action    = a
                     });
                 }).solutionStr;
                 if (solution == optimalSolution)
