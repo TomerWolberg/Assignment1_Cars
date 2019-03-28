@@ -243,7 +243,7 @@ namespace SuperUltraAwesomeAI
             }
 
             int ForwardScore(RushHour st, int h, string a, string p) => h + st.Distance(goal_state) + st.Heuristic4();
-            int BackwardScore(RushHour st, int h, string a, string p) => h + Distance(st) - st.Heuristic1() - st.Heuristic2() - st.Heuristic3() - st.Heuristic4() - st.Heuristic5() - st.Heuristic6() - st.Heuristic7() - st.Heuristic8() - st.Heuristic9();
+            int BackwardScore(RushHour st, int h, string a, string p) => h;
 
             Node forward_ans = null;
             Node backward_ans = null;
@@ -1220,7 +1220,7 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
             #endregion
 
             int waitingTime = 1;
-
+           
             #region Input Arguments
             // If arguments are not provided - print usage and exit
             if (args.Length < 1)
