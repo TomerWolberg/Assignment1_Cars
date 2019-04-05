@@ -423,7 +423,7 @@ namespace SuperUltraAwesomeAI
                     weights.Add(a, -INITIAL_COST);
             }
 
-            for (int i = 0; i < 50; i++)
+            while(true)
             {
                 //Run BFS according to the weights of the actions
                 string solution = BestFS((s, h, a) =>
@@ -439,6 +439,7 @@ namespace SuperUltraAwesomeAI
                 {   //If we found the optimal solution
                     break;
                 }
+            
                 //Update the weights of the actions
                 UpdateWeights(y0, GetActions(solution));
             }
