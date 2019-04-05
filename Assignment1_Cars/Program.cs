@@ -1377,9 +1377,9 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     outputFile.WriteLine("Avg Time  = " + t);
                 }
             }
-
+            
             ////////////////////////////////////////////////
-
+            
             avgDepth1 = 0;
             avgDepth2 = 0;
             level = 1;
@@ -1412,8 +1412,9 @@ OAA.B.OCD.BPOCDXXPQQQE.P..FEGGHHFII.";
                     s.Reset();
                 }
                 outputFile.WriteLine(String.Format("Avg search depth:{0:F3}", (float)(avgDepth1 / avgDepth2)));
-                outputFile.WriteLine("Avg Time  = " + t);
+                outputFile.WriteLine("Avg Time  = " + t);  
             }
+            
         }
     }
 }
