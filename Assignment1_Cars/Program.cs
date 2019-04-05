@@ -188,7 +188,7 @@ namespace SuperUltraAwesomeAI
         ///<summary>
         ///Best-first search informed search
         ///</summary>
-        public LabAnswer BestFS(Func<RushHour, int, string, string, int> score = null)
+        public LabAnswer BestFS(Func<RushHour, int, string, int> score = null)
         {
             Node root = new Node(null, this, null, 0, score);
             var heap = new NodesMinHeap(root);
@@ -242,8 +242,8 @@ namespace SuperUltraAwesomeAI
                 goal_state.Move(moves[i]);
             }
 
-            int ForwardScore(RushHour st, int h, string a, string p) => h + st.Distance(goal_state) + st.Heuristic4();
-            int BackwardScore(RushHour st, int h, string a, string p) => h;
+            int ForwardScore(RushHour st, int h, string a) => h + st.Distance(goal_state) + st.Heuristic4();
+            int BackwardScore(RushHour st, int h, string a) => h;
 
             Node forward_ans = null;
             Node backward_ans = null;
@@ -364,18 +364,27 @@ namespace SuperUltraAwesomeAI
 
         struct PerceptronInput
         {
-            public string stateHash;
-            public string action;
+            public int carLength;
+            public int move;
         }
 
         //Table of the weights of each action
         readonly static Dictionary<PerceptronInput, int> weights = new Dictionary<PerceptronInput, int>();
 
+        public static void PrintPerceptron()
+        {
+            foreach (var item in weights)
+            {
+                Console.WriteLine("Car length: " + item.Key.carLength);
+                Console.WriteLine("Move: " + item.Key.move);
+                Console.WriteLine("Cost of action: " + (item.Value));
+            }
+        }
+
         /// <param name="input">state and action</param>
         /// <returns>Cost of action</returns>
-        static int Cost(PerceptronInput input) => -(weights.ContainsKey(input) ?
-                                                     weights[input] :
-                                                     weights[input] = 0);
+        const int INITIAL_COST = -100000;
+        static int Cost(PerceptronInput input) => -weights[input]; 
         /// <summary>
         /// Updates the weights of a given solution according to given optimal solution
         /// </summary>
@@ -390,23 +399,43 @@ namespace SuperUltraAwesomeAI
         public void ReinforcementLearning()
         {
             //We first run BFS to find optimal solution
-            string optimalSolution = BestFS((state, h, a, p) => h).solutionStr;
+            string optimalSolution = BestFS((state, h, a) => h).solutionStr;
+            for (int i = 1; i < 5; i++)
+            {
+                foreach (var item in cars)
+                {
+                    var input = new PerceptronInput { carLength = 2, move = i };
+                    if(!weights.ContainsKey(input))
+                    {
+                        weights.Add(input, -INITIAL_COST);
+                    }
+                    input = new PerceptronInput { carLength = 3, move = i };
+                    if (!weights.ContainsKey(input))
+                    {
+                        weights.Add(input, -INITIAL_COST);
+                    }
+                }
+            }
             var y0 = GetActions(optimalSolution);
-            foreach (var a in y0) weights.Add(a, 0);
+            foreach (var a in y0)
+            {
+                if (!weights.ContainsKey(a))
+                    weights.Add(a, -INITIAL_COST);
+            }
 
-            while (true)
+            for (int i = 0; i < 50; i++)
             {
                 //Run BFS according to the weights of the actions
-                string solution = BestFS((s, h, a, p) =>
+                string solution = BestFS((s, h, a) =>
                 {
-                    if (p == null) return 0;
+                    if (a == null) return 0;
                     return Cost(new PerceptronInput
                     {
-                        stateHash = p,
-                        action = a
+                        move = a[2] & 15,
+                        carLength = cars[a[0]].size,
                     });
                 }).solutionStr;
-                if (solution == optimalSolution)
+                if (solution.Length == optimalSolution.Length)
                 {   //If we found the optimal solution
                     break;
                 }
@@ -422,12 +451,13 @@ namespace SuperUltraAwesomeAI
             var y = new List<PerceptronInput>();
             for (int i = 0; i < moves.Length - 1; i++)
             {
+                string a = moves[i];
                 y.Add(new PerceptronInput
                 {
-                    stateHash = temp.GetHash(),
-                    action = moves[i]
+                    move = a[2] & 15,
+                    carLength = cars[a[0]].size,
                 });
-                temp.Move(moves[i]);
+                temp.Move(a);
             }
             return y;
         }
@@ -451,7 +481,7 @@ namespace SuperUltraAwesomeAI
                         RushHour st,
                         string a,
                         int h,
-                        Func<RushHour, int, string, string, int> score = null)
+                        Func<RushHour, int, string, int> score = null)
             {
                 sons = new List<Node>();
                 action = a;
@@ -463,7 +493,7 @@ namespace SuperUltraAwesomeAI
                     if (score == null)
                         nodeScore = h + st.AdvancedHeuristicFunction();
                     else
-                        nodeScore = score(st, h, a, parent?.state?.GetHash());
+                        nodeScore = score(st, h, a);
                 }
                 if (p != null)
                 {
